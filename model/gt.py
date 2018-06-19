@@ -133,6 +133,18 @@ class Zona(Base):
     nombre_zona = Column(VARCHAR(35))
 
 
+class ZonasHoraria(Base):
+    __tablename__ = 'zonas_horarias'
+    __table_args__ = {'schema': 'gt'}
+
+    id_zona = Column(NUMBER(10, 0, False), primary_key=True, nullable=False)
+    abreviacion = Column(VARCHAR(6))
+    timestamp = Column(NUMBER(11, 0, False))
+    fecha_hora = Column(DateTime, primary_key=True, nullable=False)
+    gmt_variacion = Column(NUMBER(11, 0, False))
+    ahorro_luz = Column(CHAR(1), primary_key=True, nullable=False)
+
+
 class Conductore(Base):
     __tablename__ = 'conductores'
     __table_args__ = (
@@ -254,14 +266,14 @@ class Pedido(Base):
     __tablename__ = 'pedidos'
     __table_args__ = (
         ForeignKeyConstraint(['ide_pedido_asociado', 'pedido_asociado'], ['gt.pedidos.ide', 'gt.pedidos.id']),
-        Index('ind_pedidos_refcliente', 'referencia_cliente', 'ide', 'id'),
-        Index('ind_pedidos_ide_emp_empresa', 'ide', 'emp_empresa'),
         Index('ind_pedidos_ide_pet_org_f_prev', 'ide', 'pet_org_fecha_prevista'),
-        Index('ind_pedidos_pedcliente', 'pedido_cliente', 'ide', 'id'),
-        Index('ind_pedidos_ide_exp_id', 'ide', 'exp_id'),
+        Index('ind_pedidos_ide_emp_empresa', 'ide', 'emp_empresa'),
+        Index('ind_pedidos_refcliente', 'referencia_cliente', 'ide', 'id'),
         Index('ind_pedidos_tarifa', 'tarifa', 'ide', 'id'),
-        Index('ind_pedidos_cliente_gf', 'cliente', 'gf', 'ide', 'id'),
+        Index('ind_pedidos_ide_exp_id', 'ide', 'exp_id'),
+        Index('ind_pedidos_pedcliente', 'pedido_cliente', 'ide', 'id'),
         Index('ind_pedidos_pedido_asociado', 'ide_pedido_asociado', 'pedido_asociado'),
+        Index('ind_pedidos_cliente_gf', 'cliente', 'gf', 'ide', 'id'),
         Index('ind_pedidos_usu', 'gestor', 'ide', 'id'),
         {'schema': 'gt'}
     )
@@ -407,8 +419,8 @@ class Pedido(Base):
 class Poblacione(Base):
     __tablename__ = 'poblaciones'
     __table_args__ = (
-        Index('poblaciones_pais_poblacion_cpa', 'pais', 'cpa', 'poblacion_consultas'),
         Index('ind_pais_poblacion', 'pais', 'poblacion'),
+        Index('poblaciones_pais_poblacion_cpa', 'pais', 'cpa', 'poblacion_consultas'),
         {'schema': 'gt'}
     )
 
@@ -483,10 +495,10 @@ class Direccione(Base):
 class TarifasProveedor(Base):
     __tablename__ = 'tarifas_proveedor'
     __table_args__ = (
-        Index('ind_tarifas_proveedor_prov', 'proveedor', 'id'),
-        Index('ind_tarifas_proveedor_tarcte', 'tarifa', 'id'),
         Index('ind_tarifas_proveedor_veh', 'matricula', 'id'),
         Index('ind_tarifas_proveedor_cte', 'cliente', 'id'),
+        Index('ind_tarifas_proveedor_prov', 'proveedor', 'id'),
+        Index('ind_tarifas_proveedor_tarcte', 'tarifa', 'id'),
         {'schema': 'gt'}
     )
 
@@ -528,13 +540,28 @@ class TarifasProveedor(Base):
     tarifas_cliente = relationship('TarifasCliente')
 
 
+class EmpresasDireccione(Base):
+    __tablename__ = 'empresas_direcciones'
+    __table_args__ = {'schema': 'gt'}
+
+    empresa = Column(NUMBER(6, 0, False), primary_key=True, nullable=False)
+    direccion = Column(ForeignKey('gt.direcciones.id'), primary_key=True, nullable=False)
+    tipo = Column(CHAR(1))
+    codigo = Column(VARCHAR(200))
+    descripcion = Column(VARCHAR(120))
+    codigo_externo = Column(VARCHAR(200))
+    mail = Column(VARCHAR(300))
+
+    direccione = relationship('Direccione')
+
+
 class OrdenesTransporte(Base):
     __tablename__ = 'ordenes_transporte'
     __table_args__ = (
+        Index('ind_ordenes_transporte_exp_id', 'ide', 'exp_id'),
+        Index('ind_ordenes_transporte_fecha', 'fecha_ot', 'ide', 'id'),
         Index('ind_ordenes_transporte_fk', 'gestor', 'ide', 'id'),
         Index('ind_ordenes_transporte_emp', 'empresa', 'ide', 'id'),
-        Index('ind_ordenes_transporte_fecha', 'fecha_ot', 'ide', 'id'),
-        Index('ind_ordenes_transporte_exp_id', 'ide', 'exp_id'),
         {'schema': 'gt'}
     )
 
@@ -660,9 +687,9 @@ class PedidosEtapa(Base):
     __tablename__ = 'pedidos_etapas'
     __table_args__ = (
         CheckConstraint('ETAPA BETWEEN 1 AND 99'),
+        Index('ind_pedidos_etapa_dir', 'direccion', 'ide', 'pedido', 'etapa'),
         Index('ind_ped_etap_fecha', 'ide', 'pedido', 'etapa', 'fecha'),
         Index('ide_ped_etapas_fecreal', 'ide', 'pedido', 'etapa', 'fecha_real', 'fecha'),
-        Index('ind_pedidos_etapa_dir', 'direccion', 'ide', 'pedido', 'etapa'),
         {'schema': 'gt'}
     )
 

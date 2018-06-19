@@ -44,7 +44,7 @@ def procesar_gs(linea, pedido):
     return pedido
 
 def procesar_b2(campos, pedido):
-    pedido["pedido_cliente"] = campos[4]
+    pedido["pedidoCliente"] = campos[4]
     return pedido
 
 def procesar_b2a(linea, pedido):
@@ -53,7 +53,7 @@ def procesar_b2a(linea, pedido):
 
 def procesar_l11(campos, pedido):
     if campos[2] == "BM":
-        pedido["referencia_cliente"] = campos[1]
+        pedido["referenciaCliente"] = campos[1]
     elif campos[2] == "TN":
         pedido["fuente"] = campos[1]
     return pedido
@@ -86,7 +86,7 @@ def procesar_s5(campos, etapa):
     return etapa
     
 def procesar_g62(campos, etapa):
-    if campos[0] == "69":
+    if campos[1] == "69":
         etapa["tipo"] = "R"
     else:
         etapa["tipo"] = "E"
@@ -238,6 +238,109 @@ def procesar_archivo(context, file):
     log.info("<----- Fin")
     return pedidos
 
+def buscar_poblacion(context, e):
+    
+    log.info("     Buscando (%s) (%s) (%s)" 
+             % (e["pais"], e["ciudad"], e["estado"]))
+    
+    pob = "%" + e["ciudad"] + "%"
+    p = context.session.query(gt.Poblacione)\
+            .join(gt.Provincia, gt.Poblacione.provincia == gt.Provincia.id)\
+            .filter(gt.Poblacione.pais == e["pais"])\
+            .filter(gt.Poblacione.poblacion.ilike(pob))\
+            .filter(gt.Provincia.cpa == e["estado"])\
+            .first()
+            
+    log.info("%s %s" % (p.id, p.poblacion))
+    return p
+
+#
+#
+#
+def crear_direccion(context, pedido, e):
+    #
+    # Si no existe la población va a petar, así que tenemos que
+    # crearla automáticamente con Google. Hay que ponerle también
+    # la zona horaria
+    #
+    poblacion = context.session.query(gt.Poblacione)\
+            .filter(gt.Poblacione.pais == e["pais"])\
+            .filter(gt.Poblacione.poblacion == e["ciudad"])\
+            .filter(gt.Poblacione.cpa == e["estado"])\
+            .one()
+   
+    direccion = gt.Direccione()
+    direccion.direccion = e["calle"]
+    direccion.poblacion = poblacion.poblacion
+    direccion.provincia = poblacion.provincia
+    direccion.pais = poblacion.pais
+    direccion.cp = e["cp"]
+    direccion.observaciones = str(uuid.uuid4())
+    direccion.nombre = e["nombre"]
+    direccion.posicion_gps = poblacion.id
+    direccion.tipo_direccion = 0
+    
+    #
+    # Aquí falta por geolocalizar las direcciones con Google
+    #
+    context.session.add(direccion)
+    context.session.commit()   
+    
+    empresasDirecciones = gt.EmpresasDireccione()
+    empresasDirecciones.empresa = pedido.emp_empresa
+    empresasDirecciones.direccion = direccion.id
+    empresasDirecciones.codigo = ":" + e["codigoExterno"] + ":"
+    
+    context.session.add(empresasDirecciones)
+    context.session.commit()
+    
+    return direccion     
+
+def componer_etapa(context, pedido, e):
+    
+    ce = "%:" + e["codigoExterno"] + ":%"
+    empresasDireccion = context.session.query(gt.EmpresasDireccione)\
+            .filter(gt.EmpresasDireccione.empresa == pedido.emp_empresa)\
+            .filter(gt.EmpresasDireccione.codigo.ilike(ce))\
+            .first()
+    if empresasDireccion == None:
+        crear_direccion(context, pedido, e)
+        
+    empresasDirecciones = context.session.query(gt.EmpresasDireccione)\
+            .join(gt.EmpresasDireccione.direccione)\
+            .join(gt.Direccione.provincia1)\
+            .filter(gt.EmpresasDireccione.empresa == pedido.emp_empresa)\
+            .filter(gt.EmpresasDireccione.codigo.ilike(ce))\
+            .one()
+            
+    id_zona = empresasDirecciones.direccione.provincia1.id_zona
+    zonas_horarias = context.session.query(gt.ZonasHoraria)\
+            .filter(gt.ZonasHoraria.id_zona == id_zona)\
+            .order_by(gt.ZonasHoraria.fecha_hora.desc())\
+            .first()
+        
+    pedidosEtapa = gt.PedidosEtapa()
+    pedidosEtapa.ide = pedido.ide
+    pedidosEtapa.pedido = pedido.id
+    pedidosEtapa.etapa = int(e["etapa"])
+    pedidosEtapa.tipo = e["tipo"]
+    pedidosEtapa.direccion = empresasDirecciones.direccione.id
+    pedidosEtapa.fecha = e["fecha"]
+    pedidosEtapa.hora = str(e["hora"])[0:5]
+    if not zonas_horarias is None:
+        pedidosEtapa.gmt = zonas_horarias.gmt_variacion
+    pedidosEtapa.dir_nombre = empresasDirecciones.direccione.nombre
+    pedidosEtapa.dir_direccion = empresasDirecciones.direccione.direccion
+    pedidosEtapa.dir_cp = empresasDirecciones.direccione.cp
+    pedidosEtapa.codigo_externo = e["codigoExterno"]
+    pedidosEtapa.dir_latitud = empresasDirecciones.direccione.latitud
+    pedidosEtapa.dir_longitud = empresasDirecciones.direccione.longitud  
+
+    pedidosEtapa.unidad_carga = "L"
+    pedidosEtapa.cantidad_carga = float(e["peso"])     
+    pedidosEtapa.km = 0
+            
+    return pedidosEtapa        
 
 def insertar_pedido(context, p):
 
@@ -245,6 +348,8 @@ def insertar_pedido(context, p):
     pedido.ide = 10
     pedido.id = None
     pedido.cliente = '29530'
+    pedido.pedido_cliente = p["pedidoCliente"]
+    pedido.referencia_cliente = p["referenciaCliente"]
     pedido.estado = '1'
     pedido.tipo = 1
     pedido.gestor = "SCORREAS"
@@ -257,10 +362,15 @@ def insertar_pedido(context, p):
     pedido.gf = 1
     pedido.importe_sistema = 0
     pedido.frio = 0
+    pedido.emp_empresa = 26825
     
     pedido.emisor = p["emisor"]
     pedido.fuente = p["fuente"]
     pedido.timbre_uuid = p["uuid"]
+    
+    pedido.id_cambio = 0
+    pedido.pco_importe_extra = 0
+    pedido.dim_fc = 100
 
     context.session.add(pedido)
     context.session.commit()
@@ -270,10 +380,18 @@ def insertar_pedido(context, p):
             .filter(gt.Pedido.timbre_uuid == p["uuid"])\
             .first()
 
-    print(pedido.id)
-
+    log.info(pedido.id)
     
-    
+    pedidosEtapas = []
+    for etapa in p["etapas"]:
+        pedidosEtapa = componer_etapa(context, pedido, etapa)
+        if (pedidosEtapa.etapa == len(p["etapas"])):
+            pedidosEtapa.etapa = 99        
+        pedidosEtapas.append(pedidosEtapa)
+       
+    # esto es porque he tenido que hacer commit guarros
+    for pedidosEtapa in pedidosEtapas:
+        context.session.add(pedidosEtapa)
 
 def insertar_pedidos(context, pedidos):    
     for pedido in pedidos:

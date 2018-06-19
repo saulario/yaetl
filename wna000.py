@@ -6,6 +6,8 @@ import sys
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from model.TocBL import TocBL
+
 
 YAETL_HOME = ("%s/yaetl" % os.path.expanduser("~"))
 YAETL_CONFIG = ("%s/etc/yaetl.config" % YAETL_HOME)
@@ -15,7 +17,6 @@ logging.basicConfig(level=logging.INFO, filename=YAETL_LOG,
                     format="%(asctime)s %(levelname)s %(module)s.%(funcName)s %(message)s")
 log = logging.getLogger(__name__)
 
-from model import gt
 
 if __name__ == "__main__":
     """
@@ -36,9 +37,11 @@ if __name__ == "__main__":
         Session = sessionmaker(bind=engine)
         session = Session()
         
-        qry = session.query(gt.Pedido).filter(gt.Pedido.ide == 10).filter(gt.Pedido.id == 31517).all()
-        for p in qry:
-            print("%s %s" % (p.ide, p.id))
+        TocBL.delete("context", "1234")
+        TocBL.insert("context", "1234")
+        TocBL.read("context", "1234")
+        TocBL.update("context", "1234")
+        TocBL.recoger("context", "1233")
 
 
     except Exception as e:
