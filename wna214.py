@@ -106,7 +106,7 @@ def generar_isa(context, pedido, f):
     f.write(buffer)
     
 def generar_gs(context, pedido, f):
-    buffer = "GS*GF*" + context.scac + "*CWNA" \
+    buffer = "GS*QM*" + context.scac + "*CWNA" \
             + "*" + context.fecha.strftime("%Y%m%d") \
             + "*" + context.fecha.strftime("%H%M") \
             + "*" + str(context.numero) \
@@ -220,8 +220,8 @@ def generar_214_llegada(context, pedido, pedido_etapa):
         generar_gs(context, pedido, f)
         generar_b10(context, pedido, pedido_etapa, f)
         generar_l11_lx(context, pedido, pedido_etapa, f)
-        generar_ms1_ms2(context, pedido, pedido_etapa, f)
         generar_at7_llegada(context, pedido, pedido_etapa, f)
+        generar_ms1_ms2(context, pedido, pedido_etapa, f)
         generar_l11_at8(context, pedido, pedido_etapa, f)
         generar_se(context, pedido, f)
     
@@ -233,8 +233,8 @@ def generar_214_salida(context, pedido, pedido_etapa):
         generar_gs(context, pedido, f)
         generar_b10(context, pedido, pedido_etapa, f)
         generar_l11_lx(context, pedido, pedido_etapa, f)
-        generar_ms1_ms2(context, pedido, pedido_etapa, f)
         generar_at7_salida(context, pedido, pedido_etapa, f)
+        generar_ms1_ms2(context, pedido, pedido_etapa, f)
         generar_l11_at8(context, pedido, pedido_etapa, f)
         generar_se(context, pedido, f)
     
