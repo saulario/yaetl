@@ -1,5 +1,5 @@
 # coding: utf-8
-from sqlalchemy import CHAR, CheckConstraint, Column, DateTime, ForeignKey, ForeignKeyConstraint, Index, VARCHAR, text
+from sqlalchemy import CHAR, CheckConstraint, Column, DateTime, ForeignKey, ForeignKeyConstraint, Index, Table, VARCHAR, text
 from sqlalchemy.dialects.oracle.base import NUMBER
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
@@ -122,6 +122,21 @@ class TiposUrgencia(Base):
 
     id = Column(NUMBER(asdecimal=False), primary_key=True)
     descripcion = Column(VARCHAR(200))
+
+
+t_volcado_empresas = Table(
+    'volcado_empresas', metadata,
+    Column('ide', NUMBER(asdecimal=False), nullable=False),
+    Column('expedicion', NUMBER(asdecimal=False), nullable=False),
+    Column('pedido', NUMBER(asdecimal=False)),
+    Column('ot', NUMBER(asdecimal=False)),
+    Column('ide_destino', NUMBER(asdecimal=False)),
+    Column('expedicion_destino', NUMBER(asdecimal=False)),
+    Column('pedido_destino', NUMBER(asdecimal=False)),
+    Column('ot_destino', NUMBER(asdecimal=False)),
+    Column('fecha_volcado', DateTime),
+    schema='gt'
+)
 
 
 class Zona(Base):
@@ -266,14 +281,14 @@ class Pedido(Base):
     __tablename__ = 'pedidos'
     __table_args__ = (
         ForeignKeyConstraint(['ide_pedido_asociado', 'pedido_asociado'], ['gt.pedidos.ide', 'gt.pedidos.id']),
+        Index('ind_pedidos_cliente_gf', 'cliente', 'gf', 'ide', 'id'),
         Index('ind_pedidos_ide_pet_org_f_prev', 'ide', 'pet_org_fecha_prevista'),
         Index('ind_pedidos_ide_emp_empresa', 'ide', 'emp_empresa'),
         Index('ind_pedidos_refcliente', 'referencia_cliente', 'ide', 'id'),
+        Index('ind_pedidos_pedcliente', 'pedido_cliente', 'ide', 'id'),
         Index('ind_pedidos_tarifa', 'tarifa', 'ide', 'id'),
         Index('ind_pedidos_ide_exp_id', 'ide', 'exp_id'),
-        Index('ind_pedidos_pedcliente', 'pedido_cliente', 'ide', 'id'),
         Index('ind_pedidos_pedido_asociado', 'ide_pedido_asociado', 'pedido_asociado'),
-        Index('ind_pedidos_cliente_gf', 'cliente', 'gf', 'ide', 'id'),
         Index('ind_pedidos_usu', 'gestor', 'ide', 'id'),
         {'schema': 'gt'}
     )
@@ -401,7 +416,7 @@ class Pedido(Base):
     pl_ruta = Column(NUMBER(asdecimal=False))
     dim_cliente_1 = Column(VARCHAR(20))
     dim_cliente_2 = Column(VARCHAR(20))
-    codigo_area = Column(VARCHAR(50))
+    dim_cliente_6 = Column(VARCHAR(50))
     dim_cliente_3 = Column(VARCHAR(20))
     dim_cliente_4 = Column(VARCHAR(20))
     dim_cliente_5 = Column(VARCHAR(20))
@@ -558,8 +573,8 @@ class EmpresasDireccione(Base):
 class OrdenesTransporte(Base):
     __tablename__ = 'ordenes_transporte'
     __table_args__ = (
-        Index('ind_ordenes_transporte_exp_id', 'ide', 'exp_id'),
         Index('ind_ordenes_transporte_fecha', 'fecha_ot', 'ide', 'id'),
+        Index('ind_ordenes_transporte_exp_id', 'ide', 'exp_id'),
         Index('ind_ordenes_transporte_fk', 'gestor', 'ide', 'id'),
         Index('ind_ordenes_transporte_emp', 'empresa', 'ide', 'id'),
         {'schema': 'gt'}
@@ -687,8 +702,8 @@ class PedidosEtapa(Base):
     __tablename__ = 'pedidos_etapas'
     __table_args__ = (
         CheckConstraint('ETAPA BETWEEN 1 AND 99'),
-        Index('ind_pedidos_etapa_dir', 'direccion', 'ide', 'pedido', 'etapa'),
         Index('ind_ped_etap_fecha', 'ide', 'pedido', 'etapa', 'fecha'),
+        Index('ind_pedidos_etapa_dir', 'direccion', 'ide', 'pedido', 'etapa'),
         Index('ide_ped_etapas_fecreal', 'ide', 'pedido', 'etapa', 'fecha_real', 'fecha'),
         {'schema': 'gt'}
     )

@@ -56,6 +56,8 @@ def procesar_l11(campos, pedido):
         pedido["referenciaCliente"] = campos[1]
     elif campos[2] == "TN":
         pedido["fuente"] = campos[1]
+    elif campos[2] == "CN":
+        pedido["dimCliente1"] = campos[1]
     return pedido
 
 def procesar_n7(campos, pedido):
@@ -366,6 +368,7 @@ def insertar_pedido(context, p):
     
     pedido.emisor = p["emisor"]
     pedido.fuente = p["fuente"]
+    pedido.dim_cliente_1 = p["dimCliente1"]
     pedido.timbre_uuid = p["uuid"]
     
     pedido.id_cambio = 0

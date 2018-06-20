@@ -23,7 +23,7 @@ class Context():
     pass
 
 def nombre_fichero(pedido):
-    cdn = 'SEGO_990_' + pedido + "_" \
+    cdn = 'SEGO_214_' + pedido + "_" \
             + datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S%f') \
             + ".edi"
     return cdn
@@ -39,41 +39,7 @@ def generar_isa(context, pedido, f):
             + "*0*P*:\n"
     f.write(buffer)
     
-def generar_gs(context, pedido, f):
-    buffer = "GS*GF*SEGO*CWNA" \
-            + "*" + context.fecha.strftime("%Y%m%d") \
-            + "*" + context.fecha.strftime("%H%M") \
-            + "*" + str(context.numero) \
-            + "*X*004010" \
-            + "\n"     
-    f.write(buffer)
-    
-    buffer = "ST*990*0001" \
-            + "\n"     
-    f.write(buffer)    
-    
-def generar_b1(context, pedido, f):
-    buffer = "B1*SEGO" \
-            + "*" + pedido.pedido_cliente \
-            + "*" + context.fecha.strftime("%Y%m%d") \
-            + "*A" \
-            + "\n"     
-    f.write(buffer)
-    
-def generar_n9(context, pedido, f):
-    buffer = "N9*TN" \
-            + "*" + pedido.fuente \
-            + "\n"     
-    f.write(buffer)
-    
-def generar_g62(context, pedido, f):
-    buffer = "G62*69" \
-            + "*" + context.fecha.strftime("%Y%m%d") \
-            + "*U" \
-            + "*" + context.fecha.strftime("%H%M") \
-            + "*ET" \
-            + "\n"     
-    f.write(buffer)    
+
 
 def generar_se(context, pedido, f):    
     buffer = "SE*5*0001" \
@@ -91,13 +57,6 @@ def generar_se(context, pedido, f):
     f.write(buffer)      
 
 
-def generar_990(context, pedido, f):
-    generar_isa(context, pedido, f)
-    generar_gs(context, pedido, f)
-    generar_b1(context, pedido, f)
-    generar_n9(context, pedido, f)
-#    generar_g62(context, pedido, f)
-    generar_se(context, pedido, f)
     
 
 if __name__ == "__main__":
@@ -134,7 +93,7 @@ if __name__ == "__main__":
         if not pedido is None:
             fn = context.path + "/" + nombre_fichero(codigo)
             with open(fn, "w") as f:
-                generar_990(context, pedido, f)
+                pass
             
         context.session.commit()
 
