@@ -156,11 +156,49 @@ def generar_ms1_ms2(context, pedido, etapa, f):
             + "*" + obtener_remolque(context, pedido, etapa) \
             + "\n"     
     f.write(buffer)
+    
+def generar_at7_llegada(context, pedido, etapa, f):
+    cod1 = "X3"
+    if etapa.tipo == "E":
+        cod1 = "X1"
+        
+    buffer = "AT7" \
+            + "*" + cod1 \
+            + "*NS**" \
+            + "*" + etapa.fecha_inicio_carga.strftime("%y%m%d") \
+            + "*" + etapa.fecha_inicio_carga.strftime("%H%M") \
+            + "\n"
+    f.write(buffer)
 
+def generar_at7_salida(context, pedido, etapa, f):
+    cod1 = "AF"
+    if etapa.tipo == "E":
+        cod1 = "CD"
+        
+    buffer = "AT7" \
+            + "*" + cod1 \
+            + "*NS**" \
+            + "*" + etapa.fecha_fin_carga.strftime("%y%m%d") \
+            + "*" + etapa.fecha_fin_carga.strftime("%H%M") \
+            + "\n"
+    f.write(buffer)
 
+def generar_l11_at8(context, pedido, etapa, f):
+    buffer = "L11" \
+            + "*" + etapa.codigo_externo \
+            + "*LU" \
+            + "\n"     
+    f.write(buffer)     
+    
+    buffer = "AT8" \
+            + "*G" \
+            + "*L" \
+            + "*" + str(etapa.cantidad_carga) \
+            + "\n"     
+    f.write(buffer)
 
 def generar_se(context, pedido, f):    
-    buffer = "SE*5*1" \
+    buffer = "SE*10*1" \
             + "\n"     
     f.write(buffer)    
     
@@ -183,7 +221,9 @@ def generar_214_llegada(context, pedido, pedido_etapa):
         generar_b10(context, pedido, pedido_etapa, f)
         generar_l11_lx(context, pedido, pedido_etapa, f)
         generar_ms1_ms2(context, pedido, pedido_etapa, f)
-    
+        generar_at7_llegada(context, pedido, pedido_etapa, f)
+        generar_l11_at8(context, pedido, pedido_etapa, f)
+        generar_se(context, pedido, f)
     
 def generar_214_salida(context, pedido, pedido_etapa):
     
@@ -191,6 +231,12 @@ def generar_214_salida(context, pedido, pedido_etapa):
     with open(fn, "w") as f:
         generar_isa(context, pedido, f)
         generar_gs(context, pedido, f)
+        generar_b10(context, pedido, pedido_etapa, f)
+        generar_l11_lx(context, pedido, pedido_etapa, f)
+        generar_ms1_ms2(context, pedido, pedido_etapa, f)
+        generar_at7_salida(context, pedido, pedido_etapa, f)
+        generar_l11_at8(context, pedido, pedido_etapa, f)
+        generar_se(context, pedido, f)
     
 def generar_214(context, pedido, pedido_etapa):
     generar_214_llegada(context, pedido, pedido_etapa)
