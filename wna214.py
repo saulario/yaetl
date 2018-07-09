@@ -268,7 +268,7 @@ if __name__ == "__main__":
         Session = sessionmaker(bind=engine)
         context.session = Session()
         
-        codigo = "10-31586"
+        codigo = "10-31607"
         
         ide, id = codigo.split("-")
         pedido = context.session.query(gt.Pedido) \

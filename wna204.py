@@ -265,10 +265,10 @@ def crear_direccion(context, pedido, e):
     # crearla automáticamente con Google. Hay que ponerle también
     # la zona horaria
     #
-    poblacion = context.session.query(gt.Poblacione)\
-            .filter(gt.Poblacione.pais == e["pais"])\
-            .filter(gt.Poblacione.poblacion == e["ciudad"])\
-            .filter(gt.Poblacione.cpa == e["estado"])\
+    poblacion = context.session.query(gt.Poblacione) \
+            .filter(gt.Poblacione.pais == e["pais"]) \
+            .filter(gt.Poblacione.poblacion.like(e["ciudad"] + "%")) \
+            .filter(gt.Poblacione.cpa == e["estado"]) \
             .one()
    
     direccion = gt.Direccione()
@@ -427,8 +427,6 @@ if __name__ == "__main__":
         for file in get_files(context):
             pedidos = procesar_archivo(context, file)
             insertar_pedidos(context, pedidos)
-            break
-
         
         context.session.commit()
 
