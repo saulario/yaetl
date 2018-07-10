@@ -102,7 +102,7 @@ def generar_isa(context, pedido, f):
             + "*" + context.fecha.strftime("%H%M") \
             + "*U*00401" \
             + "*" + "{:0>9}".format(context.numero) \
-            + "*0*P*:\n"
+            + "*1*P*:\n"
     f.write(buffer)
     
 def generar_gs(context, pedido, f):

@@ -23,7 +23,7 @@ class Context():
     pass
 
 def nombre_fichero(pedido):
-    cdn = 'SEGO_990_' + pedido + "_" \
+    cdn = 'SEGO_997_' + pedido + "_" \
             + datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S%f') \
             + ".edi"
     return cdn
@@ -36,7 +36,7 @@ def generar_isa(context, pedido, f):
             + "*" + context.fecha.strftime("%H%M") \
             + "*U*00401" \
             + "*" + "{:0>9}".format(context.numero) \
-            + "*0*P*:\n"
+            + "*1*P*:\n"
     f.write(buffer)
     
 def generar_gs(context, pedido, f):
@@ -48,7 +48,7 @@ def generar_gs(context, pedido, f):
             + "\n"     
     f.write(buffer)
     
-    buffer = "ST*990*0001" \
+    buffer = "ST*997*1" \
             + "\n"     
     f.write(buffer)    
     
@@ -76,7 +76,7 @@ def generar_g62(context, pedido, f):
     f.write(buffer)    
 
 def generar_se(context, pedido, f):    
-    buffer = "SE*5*0001" \
+    buffer = "SE*4*1" \
             + "\n"     
     f.write(buffer)    
     

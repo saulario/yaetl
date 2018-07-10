@@ -54,27 +54,25 @@ def generar_gs(context, pedido, f):
     
 # B3**102297679501*1056355*CC*L*20180124*162280**20180118*035*SCAC~    
 def generar_b3_c3(context, pedido, factura, f):
-    
-    importe = pedido.importe
-    if not pedido.pco_importe_extra is None:
-        importe += pedido.pco_importe_extra
         
     buffer = "B3*" \
             + "*" + pedido.fac_num_oficial \
             + "*" + pedido.pedido_cliente \
             + "*CC*L" \
             + "*" + factura.fecha_emision.strftime("%Y%m%d") \
-            + "*" + str(importe * 100) \
+            + "*" + str(int(context.importe_total * 100)) \
             + "*" \
             + "*" + pedido.pet_des_fecha.strftime("%Y%m%d") + "*035" \
             + "*" + context.scac \
             + "\n"     
     f.write(buffer)
 
-    buffer = "C3*" \
+    buffer = "C3" \
             + "*" + pedido.moneda \
             + "\n"     
     f.write(buffer)
+    
+    context.segmentos += 2
 
 def generar_n9(context, pedido, f):    
     buffer = "N9*BM*" \
@@ -86,12 +84,16 @@ def generar_n9(context, pedido, f):
             + "*%s" % pedido.dim_cliente_1 \
             + "\n"     
     f.write(buffer)    
+    
+    context.segmentos += 2
 
-def generar_g62(context, pedido, f):    
+def generar_g62(context, pedido, factura, f):    
     buffer = "G62" \
-            + "*86*" + pedido.pet_org_fecha.strftime("%Y%m%d") \
+            + "*85*" + factura.fecha_emision.strftime("%Y%m%d") \
             + "\n"     
     f.write(buffer)  
+    
+    context.segmentos += 1
     
 def generar_n1(context, pedido, f):
     
@@ -143,6 +145,8 @@ def generar_n1(context, pedido, f):
             + "\n"     
     f.write(buffer)  
     
+    context.segmentos += 6
+    
 def generar_lx(context, pedido, concepto, f)    :
    
     buffer = "LX" \
@@ -155,6 +159,15 @@ def generar_lx(context, pedido, concepto, f)    :
             + "*" + concepto["descripcion"] \
             + "\n"     
     f.write(buffer)     
+       
+    tipo = "NU"
+    
+    buffer = "L0" \
+            + "*" + str(concepto["linea"]) \
+            + "*" + str(concepto["cantidad"]) \
+            + "*" + tipo \
+            + "\n"     
+    f.write(buffer)  
     
     tipo = "FC"
     if concepto["cantidad"] != 1:
@@ -163,16 +176,35 @@ def generar_lx(context, pedido, concepto, f)    :
     buffer = "L1" \
             + "*" + str(concepto["linea"]) \
             + "*" + str(concepto["precioUnit"]) \
-            + "*" + str(concepto["cantidad"]) \
             + "*" + tipo \
             + "*" + str(concepto["precio"]) \
-            + "**" \
+            + "*" \
+            + "*" \
+            + "*" \
             + "*" + concepto["codigo"] \
             + "\n"     
-    f.write(buffer)        
+    f.write(buffer)       
+    
+    context.segmentos += 4
+    
+def generar_l3(context, pedido, f):    
+    
+    buffer = "L3" \
+            + "*" \
+            + "*" \
+            + "*" \
+            + "*" \
+            + "*" + str(int(context.importe_total * 100)) \
+            + "\n"     
+    f.write(buffer)  
+    
+    context.segmentos += 1
 
 def generar_se(context, pedido, f):    
-    buffer = "SE*10*1" \
+    
+    buffer = "SE" \
+            + "*" + str(context.segmentos) \
+            + "*1" \
             + "\n"     
     f.write(buffer)    
     
@@ -199,27 +231,32 @@ def traduce_concepto(cod):
     return lista.get(cod, "MSG")
 
 def generar_210(context, pedido, factura):
+    
+    context.numero = random.randint(1000, 50000)
+    context.segmentos = 2
+    context.importe_total = pedido.importe + pedido.pco_importe_extra
+    
     fn = context.path + "/" + nombre_fichero("%s-%s" % (pedido.ide, pedido.id))
     with open(fn, "w") as f:
         generar_isa(context, pedido, f)
         generar_gs(context, pedido, f)
         generar_b3_c3(context, pedido, factura, f)
         generar_n9(context, pedido, f)
-        generar_g62(context, pedido, f)
-        generar_n1(context, pedido, f)
+        generar_g62(context, pedido, factura, f)
+#        generar_n1(context, pedido, f)
     
         # L0*1***4345*N***346~
         # L1*1*2.02*FC*143460****
         linea = 1
-        concepto = {}
-        concepto["linea"] = linea
-        concepto["codigo"] = ""
-        concepto["descripcion"] = "Base Charge"
-        concepto["cantidad"] = 1
-        concepto["precioUnit"] = pedido.importe
-        concepto["precio"] = int(pedido.importe * 100)
+        c = {}
+        c["linea"] = linea
+        c["codigo"] = ""
+        c["descripcion"] = "Line haul"
+        c["cantidad"] = 1
+        c["precioUnit"] = pedido.importe
+        c["precio"] = int(pedido.importe * 100)
         
-        generar_lx(context, pedido, concepto, f)
+        generar_lx(context, pedido, c, f)
         
         conceptos = context.session.query(gt.PedidosConcepto) \
                 .filter(gt.PedidosConcepto.ide == pedido.ide) \
@@ -227,13 +264,16 @@ def generar_210(context, pedido, factura):
                 .all()
         for concepto in conceptos:
             linea += 1
-            concepto["linea"] = linea
-            concepto["codigo"] = traduce_concepto(concepto.concepto)
-            concepto["descripcion"] = concepto.observaciones
-            concepto["cantidad"] = concepto.cantidad
-            concepto["precioUnit"] = concepto.importe_unidad
-            concepto["precio"] = int(concepto.importe * 100)
-            generar_lx(context, pedido, concepto, f)
+            c["linea"] = linea
+            c["codigo"] = traduce_concepto(concepto.concepto)
+            c["descripcion"] = concepto.observaciones
+            c["cantidad"] = concepto.cantidad
+            c["precioUnit"] = concepto.importe_unidad
+            c["precio"] = int(concepto.importe * 100)
+            generar_lx(context, pedido, c, f)
+            
+        generar_l3(context, pedido, f)
+        generar_se(context, pedido, f)
     
 
 if __name__ == "__main__":
@@ -248,7 +288,6 @@ if __name__ == "__main__":
     context.path = "/FTPSite/WNA/output"
     context.scac = "SEGO"
     context.fecha = datetime.datetime.utcnow()
-    context.numero = random.randint(1000, 50000)
 
     try:
         cp = configparser.ConfigParser()
@@ -262,7 +301,8 @@ if __name__ == "__main__":
         Session = sessionmaker(bind=engine)
         context.session = Session()
         
-        codigos = ["10-33555", "10-29613", "10-29584", "10-29755", "10-29614"] 
+#        codigos = ["10-33555", "10-29613", "10-29584", "10-29755", "10-29614"] 
+        codigos = ["10-33555", "10-31607", "10-31609",]
         
         for codigo in codigos:
             
