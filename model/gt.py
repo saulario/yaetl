@@ -16,32 +16,6 @@ class CfDimensione(Base):
     descripcion = Column(VARCHAR(30))
 
 
-class CfDispositivo(Base):
-    __tablename__ = 'cf_dispositivos'
-    __table_args__ = (
-        Index('cf_dis_iddis_fab_uk', 'id_dispositivo', 'fabricante', unique=True),
-        {'schema': 'gt'}
-    )
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    id_dispositivo = Column(NUMBER(asdecimal=False))
-    fabricante = Column(NUMBER(6, 0, False))
-    activo = Column(NUMBER(1, 0, False), server_default=text("1"))
-    mensajeria = Column(NUMBER(1, 0, False), server_default=text("0"))
-    tablet = Column(NUMBER(1, 0, False), server_default=text("0"))
-    descripcion = Column(VARCHAR(100))
-    fecha_creacion = Column(DateTime)
-    fecha_actualizacion = Column(DateTime)
-    registro = Column(VARCHAR(100))
-    fecha_ultima_conexion = Column(DateTime)
-    fecha_ultima_posicion = Column(DateTime)
-    observaciones = Column(VARCHAR(200))
-    idioma = Column(VARCHAR(25))
-    latitud = Column(NUMBER(asdecimal=False))
-    longitud = Column(NUMBER(asdecimal=False))
-    ultima_posicion = Column(VARCHAR(300))
-
-
 class CfTiposVehiculo(Base):
     __tablename__ = 'cf_tipos_vehiculo'
     __table_args__ = {'schema': 'gt'}
@@ -52,26 +26,6 @@ class CfTiposVehiculo(Base):
     arrastre = Column(VARCHAR(1))
     autonomo = Column(CHAR(1))
     nombre_us = Column(VARCHAR(50))
-
-
-class CfVehiculosBaja(Base):
-    __tablename__ = 'cf_vehiculos_baja'
-    __table_args__ = {'schema': 'gt'}
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    descripcion = Column(VARCHAR(100))
-
-
-class CmCorredore(Base):
-    __tablename__ = 'cm_corredores'
-    __table_args__ = {'schema': 'gt'}
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    nombre = Column(VARCHAR(20), nullable=False)
-    fecha_creacion = Column(DateTime, nullable=False)
-    usuario_creacion = Column(VARCHAR(20), nullable=False)
-    fecha_modificacion = Column(DateTime)
-    usuario_modificacion = Column(VARCHAR(20))
 
 
 class CmEmpresa(Base):
@@ -97,16 +51,6 @@ class CmEmpresa(Base):
     sii_dias_permitidos = Column(NUMBER(2, 0, False))
 
 
-class CmGruposDelegacione(Base):
-    __tablename__ = 'cm_grupos_delegaciones'
-    __table_args__ = {'schema': 'gt'}
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    nombre = Column(VARCHAR(50))
-    observaciones = Column(VARCHAR(200))
-    orden = Column(NUMBER(3, 0, False))
-
-
 class ConductoresTipoDocumento(Base):
     __tablename__ = 'conductores_tipo_documento'
     __table_args__ = {'schema': 'gt'}
@@ -124,32 +68,6 @@ class ConductoresTiposNomina(Base):
     nombre = Column(VARCHAR(50))
     descripcion = Column(VARCHAR(100))
     activo = Column(NUMBER(1, 0, False))
-
-
-class EmpresasEstado(Base):
-    __tablename__ = 'empresas_estados'
-    __table_args__ = {'schema': 'gt'}
-
-    id = Column(CHAR(1), primary_key=True)
-    descripcion = Column(VARCHAR(25))
-
-
-class EmpresasMotivoBaja(Base):
-    __tablename__ = 'empresas_motivo_baja'
-    __table_args__ = {'schema': 'gt'}
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    descripcion = Column(VARCHAR(25))
-
-
-class EmpresasSectore(Base):
-    __tablename__ = 'empresas_sectores'
-    __table_args__ = {'schema': 'gt'}
-
-    id = Column(NUMBER(4, 0, False), primary_key=True)
-    nombre = Column(VARCHAR(30))
-    observaciones = Column(VARCHAR(150))
-    nombre_us = Column(VARCHAR(30))
 
 
 class Moneda(Base):
@@ -198,36 +116,6 @@ class Series(Base):
     descripcion = Column(VARCHAR(200))
 
 
-class TiposConceptosTarifa(Base):
-    __tablename__ = 'tipos_conceptos_tarifas'
-    __table_args__ = {'schema': 'gt'}
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    descripcion = Column(VARCHAR(200))
-    activo = Column(CHAR(1))
-    tipo = Column(CHAR(1))
-    descripcion_us = Column(VARCHAR(200))
-
-
-class TiposImpuesto(Base):
-    __tablename__ = 'tipos_impuesto'
-    __table_args__ = {'schema': 'gt'}
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    descripcion = Column(VARCHAR(200))
-
-
-class TiposPagoCobro(Base):
-    __tablename__ = 'tipos_pago_cobro'
-    __table_args__ = {'schema': 'gt'}
-
-    id = Column(NUMBER(3, 0, False), primary_key=True)
-    descripcion = Column(VARCHAR(100))
-    idnav = Column(VARCHAR(10))
-    idinvoic = Column(VARCHAR(3))
-    ide = Column(NUMBER(asdecimal=False), nullable=False)
-
-
 class TiposUrgencia(Base):
     __tablename__ = 'tipos_urgencia'
     __table_args__ = {'schema': 'gt'}
@@ -255,80 +143,6 @@ class ZonasHoraria(Base):
     fecha_hora = Column(DateTime, primary_key=True, nullable=False)
     gmt_variacion = Column(NUMBER(11, 0, False))
     ahorro_luz = Column(CHAR(1), primary_key=True, nullable=False)
-
-
-class CfVehiculosDispositivo(Base):
-    __tablename__ = 'cf_vehiculos_dispositivos'
-    __table_args__ = {'schema': 'gt'}
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    id_vehiculo = Column(NUMBER(6, 0, False), nullable=False)
-    fecha_alta = Column(DateTime)
-    fecha_baja = Column(DateTime)
-    dispositivo = Column(ForeignKey('gt.cf_dispositivos.id'))
-
-    cf_dispositivo = relationship('CfDispositivo')
-
-
-class CfVehiculosTiempoReal(Base):
-    __tablename__ = 'cf_vehiculos_tiempo_real'
-    __table_args__ = {'schema': 'gt'}
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    id_vehiculo = Column(NUMBER(6, 0, False))
-    fecha_ultima_conexion = Column(DateTime)
-    remolque = Column(VARCHAR(20))
-    conductor1 = Column(VARCHAR(70))
-    conductor2 = Column(VARCHAR(70))
-    fecha_ultima_posicion = Column(DateTime)
-    latitud = Column(VARCHAR(40))
-    longitud = Column(VARCHAR(40))
-    velocidad = Column(NUMBER(asdecimal=False))
-    rumbo = Column(VARCHAR(10))
-    posicion_ciudad = Column(VARCHAR(200))
-    posicion_pueblo = Column(VARCHAR(200))
-    nivel_deposito = Column(NUMBER(asdecimal=False))
-    nuevo_mensaje = Column(NUMBER(1, 0, False))
-    nueva_incidencia = Column(NUMBER(1, 0, False))
-    motor_encendido = Column(NUMBER(1, 0, False))
-    estado_frigo = Column(VARCHAR(100))
-    temperatura = Column(NUMBER(asdecimal=False))
-    set_point = Column(NUMBER(asdecimal=False))
-    peso = Column(NUMBER(asdecimal=False))
-    id_conductor1 = Column(NUMBER(6, 0, False))
-    id_conductor2 = Column(NUMBER(6, 0, False))
-    kms_registrados_gps = Column(NUMBER(asdecimal=False))
-    kms_registrados_tacografo = Column(NUMBER(asdecimal=False))
-    temperatura_sonda1 = Column(NUMBER(asdecimal=False))
-    temperatura_sonda2 = Column(NUMBER(asdecimal=False))
-    modo_parking = Column(VARCHAR(20))
-    fecha_parking_desde = Column(DateTime)
-    fecha_parking_hasta = Column(DateTime)
-    ebs = Column(NUMBER(1, 0, False))
-    id_dispositivo = Column(ForeignKey('gt.cf_dispositivos.id'))
-    email_parking = Column(VARCHAR(50))
-    gmt_fecha_parking = Column(NUMBER(2, 0, False))
-
-    cf_dispositivo = relationship('CfDispositivo')
-
-
-class CmDelegacione(Base):
-    __tablename__ = 'cm_delegaciones'
-    __table_args__ = {'schema': 'gt'}
-
-    id = Column(VARCHAR(2), primary_key=True)
-    descripcion = Column(VARCHAR(200))
-    activo = Column(CHAR(1), server_default=text("'N'"))
-    fecha_alta = Column(DateTime, server_default=text("sysdate"))
-    fecha_baja = Column(DateTime)
-    grupo = Column(ForeignKey('gt.cm_grupos_delegaciones.id'))
-    responsable = Column(VARCHAR(10))
-    responsable_operativo = Column(VARCHAR(10))
-    id_corredor = Column(ForeignKey('gt.cm_corredores.id'))
-    idioma_defecto = Column(VARCHAR(5))
-
-    cm_grupos_delegacione = relationship('CmGruposDelegacione')
-    cm_corredore = relationship('CmCorredore')
 
 
 class Conductore(Base):
@@ -374,71 +188,6 @@ class Conductore(Base):
     conductores_tipos_nomina = relationship('ConductoresTiposNomina')
 
 
-class FaFactura(Base):
-    __tablename__ = 'fa_facturas'
-    __table_args__ = (
-        Index('fa_numero_factura_uq', 'ide', 'numero_factura', unique=True),
-        {'schema': 'gt'}
-    )
-
-    ide = Column(NUMBER(3, 0, False), primary_key=True, nullable=False, server_default=text("1 "))
-    id = Column(NUMBER(10, 0, False), primary_key=True, nullable=False)
-    numero_factura = Column(VARCHAR(20))
-    fecha_emision = Column(DateTime)
-    concepto = Column(VARCHAR(200))
-    cliente = Column(VARCHAR(10), nullable=False)
-    gf = Column(NUMBER(2, 0, False))
-    forma_pago = Column(NUMBER(3, 0, False))
-    dias_vencimiento = Column(NUMBER(asdecimal=False))
-    fecha_vencimiento = Column(DateTime)
-    importe = Column(NUMBER(asdecimal=False))
-    iva = Column(NUMBER(4, 2, True))
-    importe_iva = Column(NUMBER(asdecimal=False))
-    descuento = Column(NUMBER(asdecimal=False))
-    importe_descuento = Column(NUMBER(asdecimal=False))
-    importe_total = Column(NUMBER(asdecimal=False))
-    moneda = Column(ForeignKey('gt.monedas.id'))
-    cobrado = Column(CHAR(1), server_default=text("'N'"))
-    observaciones = Column(VARCHAR(200))
-    fecha_creacion = Column(DateTime, server_default=text("SYSDATE"))
-    usuario_creacion = Column(VARCHAR(100))
-    fecha_modificacion = Column(DateTime, server_default=text("SYSDATE"))
-    usuario_modificacion = Column(VARCHAR(100))
-    ide_factura_abonada = Column(NUMBER(3, 0, False))
-    factura_abonada = Column(NUMBER(10, 0, False))
-    motivo_abono = Column(VARCHAR(200))
-    estado = Column(NUMBER(1, 0, False))
-    numero_autofactura = Column(VARCHAR(30))
-    gasoil = Column(NUMBER(8, 2, True))
-    precio_tarifa = Column(NUMBER(asdecimal=False))
-    numero_oficina = Column(VARCHAR(20))
-    numero_departamento = Column(VARCHAR(20))
-    numero_albaran = Column(VARCHAR(30))
-    cambio_aplicado = Column(NUMBER(asdecimal=False))
-    moneda_cambio = Column(CHAR(3))
-    terminos_cobro = Column(NUMBER(asdecimal=False))
-    fecha_servicio = Column(DateTime)
-    gr_reg_iva_neg = Column(NUMBER(asdecimal=False))
-    facturador = Column(VARCHAR(20))
-    numero_pedido = Column(VARCHAR(50))
-    importe_sistema = Column(NUMBER(asdecimal=False))
-    importe_iva_sistema = Column(NUMBER(asdecimal=False))
-    importe_descuento_sistema = Column(NUMBER(asdecimal=False))
-    importe_total_sistema = Column(NUMBER(asdecimal=False))
-    id_cambio = Column(NUMBER(asdecimal=False))
-    retencion = Column(NUMBER(asdecimal=False))
-    importe_retencion = Column(NUMBER(asdecimal=False))
-    importe_retencion_sistema = Column(NUMBER(asdecimal=False))
-    fact_negativa = Column(NUMBER(1, 0, False))
-    sii_l2_codigo = Column(VARCHAR(2))
-    sii_l5_codigo = Column(VARCHAR(1))
-    factura_enviada = Column(NUMBER(1, 0, False))
-    fecha_envio = Column(DateTime)
-    certificado = Column(VARCHAR(50))
-
-    moneda1 = relationship('Moneda')
-
-
 class Paise(Base):
     __tablename__ = 'paises'
     __table_args__ = {'schema': 'gt'}
@@ -455,28 +204,6 @@ class Paise(Base):
     zona_horaria = Column(ForeignKey('gt.zonas.id_zona'))
 
     zona = relationship('Zona')
-
-
-class PedidosConcepto(Base):
-    __tablename__ = 'pedidos_conceptos'
-    __table_args__ = (
-        Index('ind_pedidos_concep_ide_ped_id', 'ide', 'pedido', 'id'),
-        {'schema': 'gt'}
-    )
-
-    id = Column(NUMBER(asdecimal=False), primary_key=True)
-    ide = Column(NUMBER(3, 0, False), nullable=False, server_default=text("1 "))
-    pedido = Column(NUMBER(8, 0, False), nullable=False)
-    concepto = Column(ForeignKey('gt.tipos_conceptos_tarifas.id'), nullable=False)
-    importe = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
-    moneda = Column(ForeignKey('gt.monedas.id'), server_default=text("'EUR'"))
-    importe_unidad = Column(NUMBER(asdecimal=False))
-    cantidad = Column(NUMBER(asdecimal=False))
-    observaciones = Column(VARCHAR(200))
-    importe_sistema = Column(NUMBER(asdecimal=False))
-
-    tipos_conceptos_tarifa = relationship('TiposConceptosTarifa')
-    moneda1 = relationship('Moneda')
 
 
 class TarifasCliente(Base):
@@ -535,138 +262,19 @@ class TarifasCliente(Base):
     cf_tipos_vehiculo = relationship('CfTiposVehiculo')
 
 
-class Empresa(Base):
-    __tablename__ = 'empresas'
-    __table_args__ = (
-        Index('empresas_cseguro_nif', 'codigo_seguro', 'cif'),
-        {'schema': 'gt'}
-    )
-
-    id = Column(NUMBER(6, 0, False), primary_key=True)
-    razon_social = Column(VARCHAR(100))
-    alias = Column(VARCHAR(50))
-    cif = Column(VARCHAR(30), index=True)
-    moneda = Column(ForeignKey('gt.monedas.id'))
-    sector = Column(ForeignKey('gt.empresas_sectores.id'))
-    fecha_alta = Column(DateTime, server_default=text("Sysdate"))
-    fecha_baja = Column(DateTime)
-    iva = Column(NUMBER(4, 2, True))
-    forma_pago = Column(ForeignKey('gt.tipos_pago_cobro.id'))
-    forma_cobro = Column(ForeignKey('gt.tipos_pago_cobro.id'))
-    vencimiento_pago = Column(NUMBER(3, 0, False))
-    vencimiento_cobro = Column(NUMBER(3, 0, False))
-    idc = Column(VARCHAR(10), unique=True)
-    idp = Column(VARCHAR(10), unique=True)
-    irpf = Column(NUMBER(4, 0, False))
-    grupo = Column(VARCHAR(30))
-    estado = Column(ForeignKey('gt.empresas_estados.id'), server_default=text("'A'"))
-    web = Column(VARCHAR(100))
-    pais = Column(ForeignKey('gt.paises.id'))
-    empresa_fiscal = Column(ForeignKey('gt.empresas.id'))
-    siglas = Column(VARCHAR(3))
-    dias_pago = Column(VARCHAR(20))
-    observaciones = Column(VARCHAR(200))
-    tipo_impuesto = Column(ForeignKey('gt.tipos_impuesto.id'))
-    tipo_proveedor = Column(NUMBER(asdecimal=False))
-    fecha_alta_cliente = Column(DateTime)
-    fecha_baja_cliente = Column(DateTime)
-    bloqueo_cliente = Column(CHAR(1), server_default=text("'N'"))
-    fecha_alta_proveedor = Column(DateTime)
-    fecha_baja_proveedor = Column(DateTime)
-    bloqueo_proveedor = Column(CHAR(1), server_default=text("'N'"))
-    control_flota = Column(CHAR(1))
-    tipo_cliente = Column(NUMBER(asdecimal=False))
-    riesgo = Column(NUMBER(asdecimal=False))
-    riesgo_medida = Column(NUMBER(asdecimal=False))
-    riesgo_sese = Column(NUMBER(asdecimal=False))
-    tipo_riesgo = Column(NUMBER(asdecimal=False), server_default=text("NULL"))
-    codigo_seguro = Column(VARCHAR(25))
-    descuento = Column(NUMBER(asdecimal=False))
-    retencion = Column(NUMBER(asdecimal=False))
-    numero_certificado = Column(VARCHAR(30))
-    fecha_certificado = Column(DateTime)
-    bloquear_facturas_proveedor = Column(CHAR(1))
-    bloqueo_tarifa = Column(CHAR(1), server_default=text("'N'"))
-    codigo_cuenta_cotizacion = Column(VARCHAR(12))
-    fecha_cuenta_cotizacion = Column(DateTime)
-    gr_contable_cli = Column(NUMBER(3, 0, False))
-    gr_contable_pro = Column(NUMBER(3, 0, False))
-    gr_contable_neg_cli = Column(NUMBER(3, 0, False))
-    gr_contable_neg_pro = Column(NUMBER(3, 0, False))
-    gr_registro_iva_neg_cli = Column(NUMBER(3, 0, False))
-    gr_registro_iva_neg_pro = Column(NUMBER(3, 0, False))
-    fecha_bloqueo_cliente = Column(DateTime)
-    fecha_bloqueo_proveedor = Column(DateTime)
-    terminos_pago = Column(NUMBER(3, 0, False))
-    proponer_tarifa = Column(VARCHAR(1), server_default=text("'N'"))
-    cod_presupuestario_cli = Column(VARCHAR(20))
-    cod_presupuestario_pro = Column(VARCHAR(20))
-    bloquear_facturas_proveedor_ss = Column(CHAR(1))
-    codigo_deudor_cesce = Column(VARCHAR(20))
-    refacturar = Column(VARCHAR(1), nullable=False, server_default=text("'S' "))
-    liquidador = Column(VARCHAR(20), server_default=text("null"))
-    fecha_creacion = Column(DateTime)
-    usu_creacion = Column(VARCHAR(50))
-    fecha_modificacion = Column(DateTime)
-    usu_modificacion = Column(VARCHAR(50))
-    permiso_tarjetas = Column(NUMBER(1, 0, False))
-    sigla = Column(VARCHAR(1))
-    cuenta_debe_gasoil = Column(NUMBER(asdecimal=False))
-    cuenta_debe_adblue = Column(NUMBER(asdecimal=False))
-    cuenta_debe_empleado = Column(NUMBER(asdecimal=False))
-    cuenta_haber_gasoil = Column(NUMBER(asdecimal=False))
-    cuenta_haber_adblue = Column(NUMBER(asdecimal=False))
-    cuenta_haber_empleado = Column(NUMBER(asdecimal=False))
-    cuenta = Column(VARCHAR(25))
-    tarifa_gasoleo = Column(VARCHAR(10))
-    reg_fact_prov = Column(NUMBER(1, 0, False), server_default=text("0"))
-    motivo_baja = Column(ForeignKey('gt.empresas_motivo_baja.id'))
-    observaciones_bloqueo = Column(VARCHAR(50))
-    infcli_fecha = Column(DateTime)
-    infcli_vol_mens_viajes = Column(NUMBER(asdecimal=False))
-    infcli_precio_viaje = Column(NUMBER(asdecimal=False))
-    infcli_importe_clasif_riesgo = Column(NUMBER(asdecimal=False))
-    infcli_ide_emp_fact = Column(NUMBER(3, 0, False))
-    dni_coop = Column(VARCHAR(100))
-    fecha_certificado_hacienda = Column(DateTime)
-    fecha_certificado_ss = Column(DateTime)
-    fecha_ultimo_recibo_ss_tc2 = Column(DateTime)
-    dimension_proveedor = Column(ForeignKey('gt.cf_dimensiones.id'))
-    permitir_spot = Column(NUMBER(1, 0, False), nullable=False, server_default=text("0 "))
-    tipo_cif = Column(VARCHAR(2))
-    tiene_renting = Column(NUMBER(1, 0, False))
-    cfdi_uso = Column(VARCHAR(4))
-    cfdi_aduana = Column(VARCHAR(4))
-    dig_codigo_docum_cliente = Column(VARCHAR(20))
-    emp_basica = Column(VARCHAR(1))
-    ref_externa_1 = Column(VARCHAR(20))
-    ref_externa_2 = Column(VARCHAR(20))
-
-    cf_dimensione = relationship('CfDimensione')
-    parent = relationship('Empresa', remote_side=[id])
-    empresas_estado = relationship('EmpresasEstado')
-    tipos_pago_cobro = relationship('TiposPagoCobro', primaryjoin='Empresa.forma_cobro == TiposPagoCobro.id')
-    tipos_pago_cobro1 = relationship('TiposPagoCobro', primaryjoin='Empresa.forma_pago == TiposPagoCobro.id')
-    moneda1 = relationship('Moneda')
-    empresas_motivo_baja = relationship('EmpresasMotivoBaja')
-    paise = relationship('Paise')
-    empresas_sectore = relationship('EmpresasSectore')
-    tipos_impuesto = relationship('TiposImpuesto')
-
-
 class Pedido(Base):
     __tablename__ = 'pedidos'
     __table_args__ = (
         ForeignKeyConstraint(['ide_pedido_asociado', 'pedido_asociado'], ['gt.pedidos.ide', 'gt.pedidos.id']),
-        Index('ind_pedidos_ide_pet_org_f_prev', 'ide', 'pet_org_fecha_prevista'),
-        Index('ind_pedidos_ide_emp_empresa', 'ide', 'emp_empresa'),
         Index('ind_pedidos_refcliente', 'referencia_cliente', 'ide', 'id'),
+        Index('ind_pedidos_ide_exp_id', 'ide', 'exp_id'),
         Index('ind_pedidos_pedcliente', 'pedido_cliente', 'ide', 'id'),
         Index('ind_pedidos_tarifa', 'tarifa', 'ide', 'id'),
-        Index('ind_pedidos_ide_exp_id', 'ide', 'exp_id'),
         Index('ind_pedidos_pedido_asociado', 'ide_pedido_asociado', 'pedido_asociado'),
-        Index('ind_pedidos_cliente_gf', 'cliente', 'gf', 'ide', 'id'),
         Index('ind_pedidos_usu', 'gestor', 'ide', 'id'),
+        Index('ind_pedidos_cliente_gf', 'cliente', 'gf', 'ide', 'id'),
+        Index('ind_pedidos_ide_pet_org_f_prev', 'ide', 'pet_org_fecha_prevista'),
+        Index('ind_pedidos_ide_emp_empresa', 'ide', 'emp_empresa'),
         {'schema': 'gt'}
     )
 
@@ -887,10 +495,10 @@ class Direccione(Base):
 class TarifasProveedor(Base):
     __tablename__ = 'tarifas_proveedor'
     __table_args__ = (
-        Index('ind_tarifas_proveedor_cte', 'cliente', 'id'),
-        Index('ind_tarifas_proveedor_tarcte', 'tarifa', 'id'),
         Index('ind_tarifas_proveedor_veh', 'matricula', 'id'),
         Index('ind_tarifas_proveedor_prov', 'proveedor', 'id'),
+        Index('ind_tarifas_proveedor_cte', 'cliente', 'id'),
+        Index('ind_tarifas_proveedor_tarcte', 'tarifa', 'id'),
         {'schema': 'gt'}
     )
 
@@ -932,18 +540,6 @@ class TarifasProveedor(Base):
     tarifas_cliente = relationship('TarifasCliente')
 
 
-class CfBase(Base):
-    __tablename__ = 'cf_bases'
-    __table_args__ = {'schema': 'gt'}
-
-    id = Column(NUMBER(3, 0, False), primary_key=True)
-    nombre = Column(VARCHAR(20))
-    direccion = Column(ForeignKey('gt.direcciones.id'))
-    observaciones = Column(VARCHAR(200))
-
-    direccione = relationship('Direccione')
-
-
 class EmpresasDireccione(Base):
     __tablename__ = 'empresas_direcciones'
     __table_args__ = {'schema': 'gt'}
@@ -962,10 +558,10 @@ class EmpresasDireccione(Base):
 class OrdenesTransporte(Base):
     __tablename__ = 'ordenes_transporte'
     __table_args__ = (
-        Index('ind_ordenes_transporte_fk', 'gestor', 'ide', 'id'),
         Index('ind_ordenes_transporte_exp_id', 'ide', 'exp_id'),
-        Index('ind_ordenes_transporte_fecha', 'fecha_ot', 'ide', 'id'),
         Index('ind_ordenes_transporte_emp', 'empresa', 'ide', 'id'),
+        Index('ind_ordenes_transporte_fecha', 'fecha_ot', 'ide', 'id'),
+        Index('ind_ordenes_transporte_fk', 'gestor', 'ide', 'id'),
         {'schema': 'gt'}
     )
 
@@ -1092,8 +688,8 @@ class PedidosEtapa(Base):
     __table_args__ = (
         CheckConstraint('ETAPA BETWEEN 1 AND 99'),
         Index('ind_pedidos_etapa_dir', 'direccion', 'ide', 'pedido', 'etapa'),
-        Index('ind_ped_etap_fecha', 'ide', 'pedido', 'etapa', 'fecha'),
         Index('ide_ped_etapas_fecreal', 'ide', 'pedido', 'etapa', 'fecha_real', 'fecha'),
+        Index('ind_ped_etap_fecha', 'ide', 'pedido', 'etapa', 'fecha'),
         {'schema': 'gt'}
     )
 
@@ -1146,168 +742,6 @@ class PedidosEtapa(Base):
     muelle = Column(VARCHAR(150))
 
     direccione = relationship('Direccione')
-
-
-class CfVehiculo(Base):
-    __tablename__ = 'cf_vehiculos'
-    __table_args__ = (
-        Index('ind_cf_vehiculos_empresas', 'empresa', 'id'),
-        {'schema': 'gt'}
-    )
-
-    id = Column(NUMBER(6, 0, False), primary_key=True)
-    matricula = Column(VARCHAR(12), nullable=False, unique=True)
-    tipo = Column(ForeignKey('gt.cf_tipos_vehiculo.id'))
-    marca = Column(VARCHAR(30))
-    modelo = Column(VARCHAR(50))
-    estado = Column(CHAR(1), server_default=text("'A'"))
-    empresa = Column(NUMBER(6, 0, False))
-    base = Column(ForeignKey('gt.cf_bases.id'))
-    gestor = Column(NUMBER(asdecimal=False))
-    fecha_matriculacion = Column(DateTime)
-    fecha_inicio_servicio = Column(DateTime)
-    fecha_fin_servicio = Column(DateTime)
-    bastidor = Column(VARCHAR(20))
-    tacografo = Column(VARCHAR(20))
-    ruedas = Column(VARCHAR(20))
-    gps = Column(VARCHAR(20))
-    telefono = Column(VARCHAR(20))
-    observaciones = Column(VARCHAR(200))
-    neumaticos = Column(VARCHAR(30))
-    tacografo_fecha = Column(DateTime)
-    ruedas_fecha = Column(DateTime)
-    propio = Column(CHAR(1))
-    asociado = Column(ForeignKey('gt.cf_vehiculos.id'))
-    potencia = Column(NUMBER(5, 0, False))
-    tipo_tacografo = Column(CHAR(1))
-    extension = Column(VARCHAR(8))
-    tfno_sustitucion = Column(VARCHAR(30))
-    fecha_dev_tfno_sus = Column(DateTime)
-    tablas = Column(NUMBER(3, 0, False))
-    cable_tir = Column(CHAR(1))
-    plomo = Column(CHAR(1))
-    tp_elevacion = Column(CHAR(1))
-    tp_tricarril = Column(CHAR(1))
-    tp_tarjeta = Column(CHAR(1))
-    delegacion = Column(ForeignKey('gt.cm_delegaciones.id'))
-    matricula_con_separadores = Column(VARCHAR(20))
-    tipo_proveedor = Column(VARCHAR(1))
-    usu_creacion = Column(VARCHAR(50))
-    fecha_creacion = Column(DateTime, server_default=text("sysdate"))
-    usu_modificacion = Column(VARCHAR(50))
-    fecha_modificacion = Column(DateTime, server_default=text("sysdate"))
-    orden = Column(NUMBER(asdecimal=False))
-    numero_depositos = Column(NUMBER(asdecimal=False))
-    capacidad_deposito = Column(NUMBER(asdecimal=False))
-    clasificacion_euro = Column(VARCHAR(30))
-    fecha_ultima_itv = Column(DateTime)
-    fecha_proxima_itv = Column(DateTime)
-    periodo_aviso_itv = Column(NUMBER(asdecimal=False))
-    periodo_bloqueo_itv = Column(NUMBER(asdecimal=False))
-    fecha_ultimo_mant = Column(DateTime)
-    fecha_proximo_mant = Column(DateTime)
-    dias_aviso = Column(NUMBER(asdecimal=False))
-    dias_bloqueo = Column(NUMBER(asdecimal=False))
-    dias_entre_mant = Column(NUMBER(asdecimal=False))
-    kms_ultimo_mant = Column(NUMBER(asdecimal=False))
-    kms_proximo_mant = Column(NUMBER(asdecimal=False))
-    kms_aviso = Column(NUMBER(asdecimal=False))
-    kms_bloqueo = Column(NUMBER(asdecimal=False))
-    kms_entre_mant = Column(NUMBER(asdecimal=False))
-    periodo_aviso_mant_taco = Column(NUMBER(3, 0, False))
-    periodo_bloqueo_mant_taco = Column(NUMBER(3, 0, False))
-    fecha_ultimo_mant_taco = Column(DateTime)
-    fecha_proximo_mant_taco = Column(DateTime)
-    dimension = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("null "))
-    subdimension = Column(NUMBER(asdecimal=False), nullable=False)
-    tipos_operaciones = Column(NUMBER(asdecimal=False), server_default=text("4"))
-    empresa_propietaria = Column(ForeignKey('gt.empresas.id'))
-    kms_rutas = Column(VARCHAR(13))
-    fecha_ultima_conexion = Column(DateTime)
-    remolque = Column(VARCHAR(20))
-    conductor1 = Column(VARCHAR(70))
-    conductor2 = Column(VARCHAR(70))
-    fecha_ultima_posicion = Column(DateTime)
-    latitud = Column(VARCHAR(20))
-    longitud = Column(VARCHAR(20))
-    velocidad = Column(NUMBER(asdecimal=False))
-    rumbo = Column(VARCHAR(10))
-    posicion_ciudad = Column(VARCHAR(200))
-    posicion_pueblo = Column(VARCHAR(200))
-    nivel_deposito = Column(NUMBER(asdecimal=False))
-    nuevo_mensaje = Column(NUMBER(1, 0, False))
-    nueva_incidencia = Column(NUMBER(1, 0, False))
-    motivo_baja = Column(ForeignKey('gt.cf_vehiculos_baja.id'))
-    motor_encendido = Column(NUMBER(1, 0, False))
-    ide_explotacion = Column(ForeignKey('gt.cm_empresas.id'))
-    estado_frigo = Column(VARCHAR(100))
-    temperatura = Column(NUMBER(asdecimal=False))
-    set_point = Column(NUMBER(asdecimal=False))
-    peso = Column(NUMBER(asdecimal=False))
-    id_conductor1 = Column(NUMBER(6, 0, False))
-    id_conductor2 = Column(NUMBER(6, 0, False))
-    kms_teoricos = Column(NUMBER(6, 0, False))
-    kms_ot = Column(NUMBER(6, 0, False))
-    kms_reales = Column(NUMBER(6, 0, False))
-    kms_registrados = Column(NUMBER(asdecimal=False))
-    parada = Column(NUMBER(1, 0, False))
-    tipo_plataforma = Column(VARCHAR(10))
-    gas_centro_coste = Column(VARCHAR(30))
-    gas_grupo_empresa = Column(NUMBER(6, 0, False))
-    gas_tipo = Column(VARCHAR(30))
-    gas_empresa_liquidadora = Column(VARCHAR(30))
-    gas_empresa_facturacion = Column(ForeignKey('gt.empresas.id'))
-    liquidar = Column(VARCHAR(1))
-    precio_liq = Column(NUMBER(asdecimal=False))
-    standby = Column(NUMBER(1, 0, False))
-    ot_ide = Column(NUMBER(3, 0, False))
-    ot_id = Column(NUMBER(8, 0, False))
-    ot_tipo = Column(CHAR(1))
-    ot_org_fecha_prevista = Column(DateTime)
-    ot_org_fecha_real = Column(DateTime)
-    ot_org_fecha_inicio = Column(DateTime)
-    ot_org_fecha_fin = Column(DateTime)
-    ot_org_direccion_id = Column(NUMBER(6, 0, False))
-    ot_org_nombre_dir = Column(VARCHAR(100))
-    ot_org_alias_dir = Column(VARCHAR(100))
-    ot_org_zona = Column(VARCHAR(5))
-    ot_org_poblacion = Column(VARCHAR(200))
-    ot_org_direccion = Column(VARCHAR(200))
-    ot_org_latitud = Column(NUMBER(asdecimal=False))
-    ot_org_longitud = Column(NUMBER(asdecimal=False))
-    ot_des_fecha_prevista = Column(DateTime)
-    ot_des_fecha_real = Column(DateTime)
-    ot_des_fecha_inicio = Column(DateTime)
-    ot_des_fecha_fin = Column(DateTime)
-    ot_des_direccion_id = Column(NUMBER(6, 0, False))
-    ot_des_nombre_dir = Column(VARCHAR(100))
-    ot_des_alias_dir = Column(VARCHAR(100))
-    ot_des_zona = Column(VARCHAR(5))
-    ot_des_poblacion = Column(VARCHAR(200))
-    ot_des_direccion = Column(VARCHAR(200))
-    ot_des_latitud = Column(NUMBER(asdecimal=False))
-    ot_des_longitud = Column(NUMBER(asdecimal=False))
-    ot_ultima_tractora = Column(VARCHAR(12))
-    ot_ultimo_remolque = Column(VARCHAR(12))
-    ot_dim_metros = Column(NUMBER(asdecimal=False))
-    ot_dim_peso = Column(NUMBER(asdecimal=False))
-    ot_dim_fc = Column(NUMBER(asdecimal=False))
-    ot_fecha = Column(DateTime)
-    ot_zona = Column(VARCHAR(10))
-    ot_poblacion = Column(VARCHAR(200))
-    ot_direccion = Column(NUMBER(asdecimal=False))
-    ot_etapa = Column(NUMBER(2, 0, False))
-    descripcion = Column(VARCHAR(30))
-    centro_trabajo = Column(VARCHAR(500))
-
-    parent = relationship('CfVehiculo', remote_side=[id])
-    cf_base = relationship('CfBase')
-    cm_delegacione = relationship('CmDelegacione')
-    empresa1 = relationship('Empresa', primaryjoin='CfVehiculo.empresa_propietaria == Empresa.id')
-    empresa2 = relationship('Empresa', primaryjoin='CfVehiculo.gas_empresa_facturacion == Empresa.id')
-    cm_empresa = relationship('CmEmpresa')
-    cf_vehiculos_baja = relationship('CfVehiculosBaja')
-    cf_tipos_vehiculo = relationship('CfTiposVehiculo')
 
 
 class OrdenesTransporteLinea(Base):
