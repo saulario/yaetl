@@ -113,12 +113,50 @@ def get_vehicle_snapshots(contexto):
     response = client.service.GetVehicleSnapShots(getVehicleSnapShotRequest)
     return response
     
+
+def get_period_activity(contexto):
+
+    client = contexto['cliente']
+
+    SessionInfoType = client.get_type('ns0:SessionInfo')
+    sessionInfo = SessionInfoType(SessionId = get_session(contexto))
     
+    ahora = datetime.datetime.utcnow()
+    startTime = ahora - datetime.timedelta(days = 2)
+    endTime = ahora - datetime.timedelta(days = 1)
     
+    GetPeriodActivityExRequestType = client.get_type('ns0:GetPeriodActivityExRequest')
+    getPeriodActivityExRequest = GetPeriodActivityExRequestType(
+            Session = sessionInfo
+            , Version = 0
+            , OwnerId = get_owner(contexto)
+            , StartTime = startTime
+            , EndTime = endTime
+            , PreviousCallEndTime = endTime
+            , MaximumSerializableEventSubType = 'SMDP_EVENT_UNKNOWN'
+            )
     
+    response = client.service.GetPeriodActivityEx(getPeriodActivityExRequest)
+    return response
+
+
+def get_hos_timers(contexto):
+
+    client = contexto['cliente']
+
+    SessionInfoType = client.get_type('ns0:SessionInfo')
+    sessionInfo = SessionInfoType(SessionId = get_session(contexto))
     
+    GetHOSTimersRequestType = client.get_type('ns0:GetHOSTimersRequest')
+    getHOSTimersRequest = GetHOSTimersRequestType(
+            Session = sessionInfo
+            , Version = 0
+            , ID = get_owner(contexto)
+            , RequestType = 'Owner'
+            )
     
-    
+    response = client.service.GetHOSTimers(getHOSTimersRequest)
+    return response
 
 
 if __name__ == '__main__':
@@ -134,7 +172,6 @@ if __name__ == '__main__':
         contexto['cp'] = cp
         
         settings = Settings(strict = False, forbid_dtd = False, forbid_entities = False)
-#        wsdl = 'https://onlineavl2api-us.navmanwireless.com/onlineavl/api/V2.1/service.asmx?wsdl'
         contexto['cliente'] = Client(cp.get('TELETRAC','url'), settings = settings)  
 
         contexto['sesion'] = do_login(contexto)
@@ -143,6 +180,8 @@ if __name__ == '__main__':
         contexto['owners'] = get_owners(contexto)
         contexto['vehicles'] = get_vehicles(contexto)        
         contexto['snapshot'] = get_vehicle_snapshots(contexto) 
+        contexto['activity'] = get_period_activity(contexto)
+        contexto['timers'] = get_hos_timers(contexto)
 
     except Exception as e:
         log.error(traceback.format_tb(sys.exc_info()[2]))
