@@ -1,46 +1,19 @@
 
-import configparser
-import logging
-import os
-import sys
 
-import cx_Oracle
+if __name__ == '__main__':
+#    latitud = 41.644059
+    latitud = abs(-0.969922)
 
-
-YAETL_HOME = ("%s/yaetl" % os.path.expanduser("~"))
-YAETL_CONFIG = ("%s/etc/yaetl.config" % YAETL_HOME)
-YAETL_LOG = ("%s/log/%s.log" %
-             (YAETL_HOME, os.path.basename(__file__).split(".")[0]))
-logging.basicConfig(level=logging.INFO, filename=YAETL_LOG,
-                    format="%(asctime)s %(levelname)s %(module)s.%(funcName)s %(message)s")
-log = logging.getLogger(__name__)
-
-#
-#
-#
-if __name__ == "__main__":
-    """
-    Main module
-    """
-    log.info("=====> Inicio (%s)" % os.getpid())
-    retval = 0
-    con = None
-
-    try:
-        cp = configparser.ConfigParser()
-        cp.read(YAETL_CONFIG)
+#    retval = grados + minutos / 60 + segundos / 3600
         
-        uri = cp.get("GT", "uri")
-        con = cx_Oracle.connect(uri)
-
-
-
-    except Exception as e:
-        log.error(e)
-        retval = 1
-    finally:
-        if not con is None:
-            con.close()
-
-    log.info("<===== Fin (%s)" % os.getpid())
-    sys.exit(retval)
+    grados = int(latitud)
+    latitud -= grados
+    minutos = int(latitud * 60)
+    latitud -= minutos / 60
+    segundos = int(round(latitud * 3600, 0))
+    
+    
+    print("%d %d %d %f" % (grados, minutos, segundos, latitud))
+    
+    s = '{:03d}{:02d}{:02d}'.format(grados, minutos, segundos)
+    print(s)
