@@ -87,7 +87,8 @@ def generar_se(context, f):
     f.write(buffer)    
 
 def test_990_to_does_not_exist(context):
-    fn = context.path + "/test_990_to_does_not_exist"
+    fn = context.path + "/X12_990_{}_{}-{}_does_not_exist.EDI" \
+            .format(context.ot.emp_idp, context.ot.ide, context.ot.id)
     context.lineas = 0
     with open(fn, "w") as f:
         generar_isa(context, f)
@@ -104,7 +105,8 @@ def test_990_to_does_not_exist(context):
         generar_se(context, f)
 
 def test_990_to_incorrect_carrier(context):
-    fn = context.path + "/test_990_to_incorrect_carrier"
+    fn = context.path + "/X12_990_{}_{}-{}_incorrect_carrier.EDI" \
+            .format(context.ot.emp_idp, context.ot.ide, context.ot.id)
     context.lineas = 0    
     with open(fn, "w") as f:
         generar_isa(context, f)
@@ -121,7 +123,8 @@ def test_990_to_incorrect_carrier(context):
         generar_se(context, f)
 
 def test_990_invalid_function(context):
-    fn = context.path + "/test_990_invalid_function"
+    fn = context.path + "/X12_990_{}_{}-{}_invalid_function.EDI" \
+            .format(context.ot.emp_idp, context.ot.ide, context.ot.id)
     context.lineas = 0    
     with open(fn, "w") as f:
         generar_isa(context, f)
@@ -138,7 +141,8 @@ def test_990_invalid_function(context):
         generar_se(context, f)
 
 def test_990_function_omitted(context):
-    fn = context.path + "/test_990_function_omitted"
+    fn = context.path + "/X12_990_{}_{}-{}_function_omitted.EDI" \
+            .format(context.ot.emp_idp, context.ot.ide, context.ot.id)
     context.lineas = 0    
     with open(fn, "w") as f:
         generar_isa(context, f)
@@ -147,7 +151,8 @@ def test_990_function_omitted(context):
         generar_se(context, f)
 
 def test_990_accepted(context):
-    fn = context.path + "/test_990_accepted"
+    fn = context.path + "/X12_990_{}_{}-{}_accepted.EDI" \
+            .format(context.ot.emp_idp, context.ot.ide, context.ot.id)
     context.lineas = 0    
     with open(fn, "w") as f:
         generar_isa(context, f)
@@ -171,7 +176,8 @@ def test_990_accepted(context):
         generar_se(context, f)
 
 def test_990_declined(context):
-    fn = context.path + "/test_990_declined"
+    fn = context.path + "/X12_990_{}_{}-{}_declined.EDI" \
+            .format(context.ot.emp_idp, context.ot.ide, context.ot.id)
     context.lineas = 0    
     with open(fn, "w") as f:
         generar_isa(context, f)
@@ -190,7 +196,8 @@ def test_990_declined(context):
         
 
 def test_214_to_does_not_exist(context):
-    fn = context.path + "/test_214_to_does_not_exist"
+    fn = context.path + "/X12_214_{}_{}-{}_does_not_exist.EDI" \
+            .format(context.ot.emp_idp, context.ot.ide, context.ot.id)
     context.lineas = 0    
     with open(fn, "w") as f:
         generar_isa(context, f)
@@ -205,7 +212,8 @@ def test_214_to_does_not_exist(context):
         generar_se(context, f)        
         
 def test_214_to_incorrect_carrier(context):
-    fn = context.path + "/test_214_to_incorrect_carrier"
+    fn = context.path + "/X12_214_{}_{}-{}_incorrect_carrier.EDI" \
+            .format(context.ot.emp_idp, context.ot.ide, context.ot.id)
     context.lineas = 0    
     with open(fn, "w") as f:
         generar_isa(context, f)
@@ -220,7 +228,8 @@ def test_214_to_incorrect_carrier(context):
         generar_se(context, f)             
         
 def test_214_stop_does_not_exist(context):
-    fn = context.path + "/test_214_stop_does_not_exist"
+    fn = context.path + "/X12_214_{}_{}-{}_stop_does_not_exist.EDI" \
+            .format(context.ot.emp_idp, context.ot.ide, context.ot.id)
     context.lineas = 0    
     with open(fn, "w") as f:
         generar_isa(context, f)
@@ -241,6 +250,8 @@ def test_214_stop_does_not_exist(context):
             buffer = "AT7" \
                     + "*" + code \
                     + "*NS" \
+                    + "*" \
+                    + "*" \
                     + "*" + otl.fecha.strftime("%Y%m%d") \
                     + "*" + otl.hora.replace(":", "") \
                     + "*LT" \
@@ -257,7 +268,8 @@ def test_214_stop_does_not_exist(context):
         generar_se(context, f)    
 
 def test_214_stop_incorrect_to(context):
-    fn = context.path + "/test_214_stop_incorrect_to"
+    fn = context.path + "/X12_214_{}_{}-{}_stop_incorrect_to.EDI" \
+            .format(context.ot.emp_idp, context.ot.ide, context.ot.id)
     context.lineas = 0    
     with open(fn, "w") as f:
         generar_isa(context, f)
@@ -278,6 +290,8 @@ def test_214_stop_incorrect_to(context):
             buffer = "AT7" \
                     + "*" + code \
                     + "*NS" \
+                    + "*" \
+                    + "*" \
                     + "*" + otl.fecha.strftime("%Y%m%d") \
                     + "*" + otl.hora.replace(":", "") \
                     + "*LT" \
@@ -294,7 +308,8 @@ def test_214_stop_incorrect_to(context):
         generar_se(context, f)   
 
 def test_214_events_placed_incorrect(context):
-    fn = context.path + "/test_214_events_placed_incorrect"
+    fn = context.path + "/X12_214_{}_{}-{}_events_placed_incorrect.EDI" \
+            .format(context.ot.emp_idp, context.ot.ide, context.ot.id)
     context.lineas = 0    
     with open(fn, "w") as f:
         generar_isa(context, f)
@@ -315,6 +330,8 @@ def test_214_events_placed_incorrect(context):
             buffer = "AT7" \
                     + "*" + code \
                     + "*NS" \
+                    + "*" \
+                    + "*" \
                     + "*" + otl.fecha.strftime("%Y%m%d") \
                     + "*" + otl.hora.replace(":", "") \
                     + "*LT" \
@@ -350,7 +367,8 @@ def wgs84toddms(wgs84, code):
     return coord, code
 
 def test_214_positions_placed_incorrect(context):
-    fn = context.path + "/test_214_positions_placed_incorrect"
+    fn = context.path + "/X12_214_{}_{}-{}_positions_placed_incorrect.EDI" \
+            .format(context.ot.emp_idp, context.ot.ide, context.ot.id)
     context.lineas = 0    
     with open(fn, "w") as f:
         generar_isa(context, f)
@@ -369,6 +387,8 @@ def test_214_positions_placed_incorrect(context):
             buffer = "AT7" \
                     + "*X6" \
                     + "*NS" \
+                    + "*" \
+                    + "*" \
                     + "*" + posicion.DateTimeGps.strftime("%Y%m%d") \
                     + "*" + posicion.DateTimeGps.strftime("%H%M") \
                     + "*UT" \
@@ -391,7 +411,8 @@ def test_214_positions_placed_incorrect(context):
         generar_se(context, f)   
 
 def test_214_ok(context):
-    fn = context.path + "/test_214_ok"
+    fn = context.path + "/X12_214_{}_{}-{}_ok.EDI" \
+            .format(context.ot.emp_idp, context.ot.ide, context.ot.id)
     context.lineas = 0    
     with open(fn, "w") as f:
         generar_isa(context, f)
@@ -413,6 +434,8 @@ def test_214_ok(context):
             buffer = "AT7" \
                     + "*" + code \
                     + "*NS" \
+                    + "*" \
+                    + "*" \
                     + "*" + otl.fecha.strftime("%Y%m%d") \
                     + "*" + otl.hora.replace(":", "") \
                     + "*LT" \
@@ -439,6 +462,8 @@ def test_214_ok(context):
             buffer = "AT7" \
                     + "*X6" \
                     + "*NS" \
+                    + "*" \
+                    + "*" \
                     + "*" + posicion.DateTimeGps.strftime("%Y%m%d") \
                     + "*" + posicion.DateTimeGps.strftime("%H%M") \
                     + "*UT" \
@@ -474,7 +499,7 @@ if __name__ == "__main__":
     context.fecha = datetime.datetime.utcnow()
     context.numero = random.randint(1000, 50000)    
     
-    ot = "10-35487"
+    ot = "3-10581"
 
     try:
         cp = configparser.ConfigParser()
