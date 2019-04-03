@@ -87,6 +87,35 @@ class CmEmpresa(Base):
     tipo_cierre = Column(NUMBER(10, 0, False), nullable=False, server_default=text("0 "))
 
 
+class ConductoresTipoDocumento(Base):
+    __tablename__ = 'conductores_tipo_documento'
+
+    id = Column(NUMBER(2, 0, False), primary_key=True)
+    descripcion = Column(VARCHAR(100))
+    observaciones = Column(VARCHAR(200))
+    activo = Column(NUMBER(1, 0, False))
+    nombre = Column(VARCHAR(100))
+
+
+class ConductoresTipoModalidad(Base):
+    __tablename__ = 'conductores_tipo_modalidad'
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    descripcion = Column(VARCHAR(100))
+    activo = Column(NUMBER(1, 0, False), server_default=text("""\
+1
+"""))
+
+
+class ConductoresTiposNomina(Base):
+    __tablename__ = 'conductores_tipos_nomina'
+
+    id = Column(NUMBER(6, 0, False), primary_key=True)
+    descripcion = Column(VARCHAR(100))
+    activo = Column(NUMBER(1, 0, False))
+    nombre = Column(VARCHAR(50))
+
+
 class DigDocumentacionCliente(Base):
     __tablename__ = 'dig_documentacion_cliente'
 
@@ -119,8 +148,8 @@ class EmpresasGrCtbCli(Base):
 class EmpresasGrCtbNeg(Base):
     __tablename__ = 'empresas_gr_ctb_neg'
     __table_args__ = (
-        Index('ind_emp_gr_ctb_neg_cli', 'ide', 'id', 'activo_cli'),
-        Index('ind_emp_gr_ctb_neg_pro', 'ide', 'id', 'activo_pro')
+        Index('ind_emp_gr_ctb_neg_pro', 'ide', 'id', 'activo_pro'),
+        Index('ind_emp_gr_ctb_neg_cli', 'ide', 'id', 'activo_cli')
     )
 
     ide = Column(NUMBER(asdecimal=False), nullable=False)
@@ -184,6 +213,22 @@ class EmpresasTiposProveedor(Base):
     rol_permitido = Column(VARCHAR(100))
 
 
+class OrdenesTransporteEstadoEnv(Base):
+    __tablename__ = 'ordenes_transporte_estado_env'
+
+    id = Column(NUMBER(asdecimal=False), primary_key=True)
+    estado = Column(VARCHAR(50))
+    activo = Column(NUMBER(1, 0, False))
+
+
+class OrdenesTransporteEstado(Base):
+    __tablename__ = 'ordenes_transporte_estados'
+
+    id = Column(CHAR(1), primary_key=True)
+    descripcion = Column(VARCHAR(50))
+    descripcion_us = Column(VARCHAR(50))
+
+
 class OrigenDatosDivisa(Base):
     __tablename__ = 'origen_datos_divisas'
 
@@ -199,6 +244,14 @@ class Regione(Base):
     id = Column(NUMBER(5, 0, False), primary_key=True)
     descripcion = Column(VARCHAR(100))
     nombre = Column(VARCHAR(50))
+
+
+class Series(Base):
+    __tablename__ = 'series'
+
+    id = Column(CHAR(3), primary_key=True)
+    nombre = Column(VARCHAR(50))
+    descripcion = Column(VARCHAR(200))
 
 
 class TiposConceptosTarifa(Base):
@@ -227,6 +280,7 @@ class TiposPagoCobro(Base):
     idinvoic = Column(VARCHAR(3))
     ide = Column(NUMBER(asdecimal=False), nullable=False)
     activo = Column(NUMBER(1, 0, False))
+    validar_iban = Column(NUMBER(1, 0, False), nullable=False, server_default=text("0 "))
 
 
 class TiposUrgencia(Base):
@@ -288,6 +342,79 @@ class CmUsuario(Base):
 
     cm_centros_trabajo = relationship('CmCentrosTrabajo')
     cm_departamento = relationship('CmDepartamento')
+
+
+class Conductore(Base):
+    __tablename__ = 'conductores'
+    __table_args__ = (
+        Index('ind_conductores_emp', 'empresa', 'id'),
+    )
+
+    id = Column(NUMBER(6, 0, False), primary_key=True)
+    nombre = Column(VARCHAR(100), nullable=False)
+    alias = Column(VARCHAR(50))
+    empresa = Column(NUMBER(6, 0, False))
+    serie = Column(ForeignKey('series.id'))
+    propio = Column(CHAR(1))
+    observaciones = Column(VARCHAR(200))
+    nombre_solo = Column(VARCHAR(100))
+    apellidos = Column(VARCHAR(100), nullable=False)
+    dni = Column(VARCHAR(30))
+    usu_creacion = Column(VARCHAR(100))
+    fecha_creacion = Column(DateTime)
+    tipo = Column(NUMBER(3, 0, False))
+    documento_pais = Column(VARCHAR(30))
+    permiso_tacografo = Column(VARCHAR(30))
+    tipo_documento = Column(ForeignKey('conductores_tipo_documento.id'))
+    documento = Column(VARCHAR(30))
+    activo = Column(VARCHAR(1))
+    dimension = Column(NUMBER(asdecimal=False))
+    usu_modificacion = Column(VARCHAR(100))
+    fecha_modificacion = Column(DateTime)
+    id_extra = Column(NUMBER(6, 0, False))
+    fecha_nacimiento = Column(DateTime)
+    tipo_nomina = Column(ForeignKey('conductores_tipos_nomina.id'))
+    antiguedad = Column(DateTime)
+    trafico = Column(VARCHAR(200))
+    residencia = Column(VARCHAR(200))
+    titular_cuenta = Column(VARCHAR(100))
+    cuenta_bancaria = Column(VARCHAR(50))
+    telefono = Column(VARCHAR(100))
+    tipo_modalidad = Column(ForeignKey('conductores_tipo_modalidad.id'))
+    vacaciones = Column(NUMBER(3, 0, False), server_default=text("""\
+0
+"""))
+    vacaciones_consumidas = Column(NUMBER(3, 0, False), server_default=text("""\
+0
+"""))
+    base_radio = Column(Integer)
+    base_longitud = Column(NUMBER(asdecimal=False))
+    base_latitud = Column(NUMBER(asdecimal=False))
+
+    series = relationship('Series')
+    conductores_tipo_documento = relationship('ConductoresTipoDocumento')
+    conductores_tipo_modalidad = relationship('ConductoresTipoModalidad')
+    conductores_tipos_nomina = relationship('ConductoresTiposNomina')
+
+
+class Expedicione(Base):
+    __tablename__ = 'expediciones'
+
+    ide = Column(ForeignKey('cm_empresas.id'), primary_key=True, nullable=False, server_default=text("1 "))
+    id = Column(NUMBER(8, 0, False), primary_key=True, nullable=False)
+    gestor = Column(VARCHAR(15))
+    fecha = Column(DateTime)
+    estado = Column(CHAR(1))
+    referencia_cliente = Column(VARCHAR(50), index=True)
+    fecha_inicio = Column(DateTime, index=True)
+    fecha_fin = Column(DateTime, index=True)
+    observaciones = Column(VARCHAR(200))
+    usu_creacion = Column(VARCHAR(50))
+    fecha_creacion = Column(DateTime)
+    usu_modificacion = Column(VARCHAR(20))
+    fecha_modificacion = Column(DateTime)
+
+    cm_empresa = relationship('CmEmpresa')
 
 
 class Moneda(Base):
@@ -389,8 +516,8 @@ class PedidosConcepto(Base):
 class Poblacione(Base):
     __tablename__ = 'poblaciones'
     __table_args__ = (
-        Index('poblaciones_pais_poblacion_cpa', 'pais', 'cpa', 'poblacion_consultas'),
-        Index('ind_pais_poblacion', 'pais', 'poblacion')
+        Index('ind_pais_poblacion', 'pais', 'poblacion'),
+        Index('poblaciones_pais_poblacion_cpa', 'pais', 'cpa', 'poblacion_consultas')
     )
 
     id = Column(NUMBER(8, 0, False), primary_key=True)
@@ -652,15 +779,15 @@ class Pedido(Base):
     __tablename__ = 'pedidos'
     __table_args__ = (
         ForeignKeyConstraint(['ide_pedido_asociado', 'pedido_asociado'], ['pedidos.ide', 'pedidos.id']),
-        Index('ind_pedidos_tarifa', 'tarifa', 'ide', 'id'),
-        Index('ind_pedidos_pedcliente', 'pedido_cliente', 'ide', 'id'),
-        Index('ind_pedidos_pedido_asociado', 'ide_pedido_asociado', 'pedido_asociado'),
-        Index('ind_pedidos_usu', 'gestor', 'ide', 'id'),
-        Index('ind_pedidos_ide_emp_empresa', 'ide', 'emp_empresa'),
-        Index('ind_pedidos_cliente_gf', 'cliente', 'gf', 'ide', 'id'),
-        Index('ind_pedidos_ide_exp_id', 'ide', 'exp_id'),
         Index('ind_pedidos_ide_pet_org_f_prev', 'ide', 'pet_org_fecha_prevista'),
-        Index('ind_pedidos_refcliente', 'referencia_cliente', 'ide', 'id')
+        Index('ind_pedidos_tarifa', 'tarifa', 'ide', 'id'),
+        Index('ind_pedidos_ide_emp_empresa', 'ide', 'emp_empresa'),
+        Index('ind_pedidos_usu', 'gestor', 'ide', 'id'),
+        Index('ind_pedidos_refcliente', 'referencia_cliente', 'ide', 'id'),
+        Index('ind_pedidos_ide_exp_id', 'ide', 'exp_id'),
+        Index('ind_pedidos_cliente_gf', 'cliente', 'gf', 'ide', 'id'),
+        Index('ind_pedidos_pedcliente', 'pedido_cliente', 'ide', 'id'),
+        Index('ind_pedidos_pedido_asociado', 'ide_pedido_asociado', 'pedido_asociado')
     )
 
     ide = Column(ForeignKey('cm_empresas.id'), primary_key=True, nullable=False, server_default=text("1 "))
@@ -800,6 +927,8 @@ class Pedido(Base):
     dim_cliente_7 = Column(VARCHAR(30))
     dig_codigo_docum_cliente = Column(ForeignKey('dig_documentacion_cliente.id'))
     parquin_vigilado = Column(NUMBER(1, 0, False))
+    dir_org_cp = Column(VARCHAR(10))
+    dir_des_cp = Column(VARCHAR(10))
 
     dig_documentacion_cliente = relationship('DigDocumentacionCliente')
     cm_empresa = relationship('CmEmpresa')
@@ -811,8 +940,8 @@ class Pedido(Base):
 class PedidosEtapasDetalle(Base):
     __tablename__ = 'pedidos_etapas_detalle'
     __table_args__ = (
-        Index('ind_ped_et_det_prov_alb', 'proveedor', 'albaran'),
-        Index('ind_ped_et_det_prov_alb_falb', 'proveedor', 'albaran', 'fecha_albaran')
+        Index('ind_ped_et_det_prov_alb_falb', 'proveedor', 'albaran', 'fecha_albaran'),
+        Index('ind_ped_et_det_prov_alb', 'proveedor', 'albaran')
     )
 
     ide = Column(NUMBER(3, 0, False), primary_key=True, nullable=False, server_default=text("1 "))
@@ -896,6 +1025,53 @@ class TarifasClienteConcepto(Base):
     tarifas_cliente = relationship('TarifasCliente')
 
 
+class TarifasProveedor(Base):
+    __tablename__ = 'tarifas_proveedor'
+    __table_args__ = (
+        Index('ind_tarifas_proveedor_prov', 'proveedor', 'id'),
+        Index('ind_tarifas_proveedor_cte', 'cliente', 'id'),
+        Index('ind_tarifas_proveedor_tarcte', 'tarifa', 'id'),
+        Index('ind_tarifas_proveedor_veh', 'matricula', 'id')
+    )
+
+    id = Column(NUMBER(6, 0, False), primary_key=True)
+    proveedor = Column(VARCHAR(10))
+    matricula = Column(NUMBER(6, 0, False))
+    cliente = Column(VARCHAR(10))
+    tarifa = Column(ForeignKey('tarifas_cliente.id'))
+    precio_viaje = Column(NUMBER(asdecimal=False))
+    unidades = Column(CHAR(1))
+    precio_unidad = Column(NUMBER(asdecimal=False))
+    precio_nac = Column(NUMBER(asdecimal=False))
+    precio_vnac = Column(NUMBER(asdecimal=False))
+    precio_int = Column(NUMBER(asdecimal=False))
+    precio_vint = Column(NUMBER(asdecimal=False))
+    moneda = Column(ForeignKey('monedas.id'), server_default=text("'EUR'"))
+    unidades_2 = Column(CHAR(1))
+    precio_unidad_2 = Column(NUMBER(asdecimal=False))
+    u1_desde = Column(NUMBER(asdecimal=False))
+    u1_hasta = Column(NUMBER(asdecimal=False))
+    ratio = Column(NUMBER(asdecimal=False))
+    imp_exp = Column(CHAR(1))
+    zona_origen = Column(VARCHAR(5))
+    zona_destino = Column(VARCHAR(5))
+    fecha_inicio = Column(DateTime)
+    fecha_fin = Column(DateTime)
+    fecha_creacion = Column(DateTime)
+    usu_creacion = Column(VARCHAR(100))
+    ide = Column(NUMBER(10, 0, False))
+    gl = Column(NUMBER(10, 0, False))
+    tipo_apl_tarifa = Column(NUMBER(asdecimal=False), nullable=False, server_default=text("0 "))
+    tipo_vehiculo = Column(NUMBER(3, 0, False))
+    id_poblacion_origen = Column(ForeignKey('poblaciones.id'))
+    id_poblacion_destino = Column(ForeignKey('poblaciones.id'))
+
+    poblacione = relationship('Poblacione', primaryjoin='TarifasProveedor.id_poblacion_destino == Poblacione.id')
+    poblacione1 = relationship('Poblacione', primaryjoin='TarifasProveedor.id_poblacion_origen == Poblacione.id')
+    moneda1 = relationship('Moneda')
+    tarifas_cliente = relationship('TarifasCliente')
+
+
 class EmpresasGruposFacturacion(Base):
     __tablename__ = 'empresas_grupos_facturacion'
 
@@ -957,12 +1133,140 @@ class EmpresasGruposFacturacion(Base):
     moneda1 = relationship('Moneda')
 
 
+class OrdenesTransporte(Base):
+    __tablename__ = 'ordenes_transporte'
+    __table_args__ = (
+        Index('ind_ordenes_transporte_emp', 'empresa', 'ide', 'id'),
+        Index('ind_ordenes_transporte_fecha', 'fecha_ot', 'ide', 'id'),
+        Index('ind_ordenes_transporte_fk', 'gestor', 'ide', 'id'),
+        Index('ind_ordenes_transporte_exp_id', 'ide', 'exp_id')
+    )
+
+    ide = Column(ForeignKey('cm_empresas.id'), primary_key=True, nullable=False, server_default=text("1 "))
+    id = Column(NUMBER(8, 0, False), primary_key=True, nullable=False)
+    semi = Column(NUMBER(6, 0, False))
+    gestor = Column(VARCHAR(20))
+    empresa = Column(NUMBER(6, 0, False))
+    agencia = Column(CHAR(1))
+    para = Column(VARCHAR(50))
+    atton = Column(VARCHAR(50))
+    fax = Column(VARCHAR(30))
+    importe_prov = Column(NUMBER(asdecimal=False))
+    moneda = Column(CHAR(3), server_default=text("'EUR'"))
+    tarifa = Column(ForeignKey('tarifas_proveedor.id'))
+    tipo_tarifa = Column(CHAR(1))
+    importe_tarifa = Column(NUMBER(asdecimal=False))
+    tipo = Column(CHAR(1), server_default=text("'N'"))
+    kms = Column(NUMBER(asdecimal=False))
+    albaran = Column(VARCHAR(150))
+    tractora = Column(NUMBER(6, 0, False))
+    remolque = Column(NUMBER(6, 0, False))
+    horas = Column(NUMBER(asdecimal=False))
+    estado = Column(CHAR(1), server_default=text("'A'"))
+    gestor_flota = Column(VARCHAR(10))
+    conductor1 = Column(ForeignKey('conductores.id'))
+    conductor2 = Column(ForeignKey('conductores.id'))
+    cantidad_minima = Column(NUMBER(asdecimal=False))
+    observaciones = Column(VARCHAR(400))
+    usu_creacion = Column(VARCHAR(50))
+    fecha_creacion = Column(DateTime, server_default=text("SYSDATE"))
+    usu_modificacion = Column(VARCHAR(50))
+    fecha_modificacion = Column(DateTime)
+    estado_admin = Column(ForeignKey('ordenes_transporte_estados.id'), server_default=text("'0'"))
+    fecha_ot = Column(DateTime)
+    ide_factura = Column(NUMBER(3, 0, False))
+    factura = Column(NUMBER(10, 0, False))
+    observaciones_admin = Column(VARCHAR(400))
+    conforme = Column(CHAR(1), server_default=text("'N'"))
+    gl = Column(NUMBER(2, 0, False), server_default=text("1"))
+    regularizacion = Column(VARCHAR(1))
+    fuente = Column(VARCHAR(100))
+    peso = Column(NUMBER(asdecimal=False))
+    ot_cargada = Column(NUMBER(asdecimal=False))
+    importe_prov_sistema = Column(NUMBER(asdecimal=False))
+    id_cambio = Column(NUMBER(asdecimal=False))
+    estado_flota = Column(ForeignKey('ordenes_transporte_estado_env.id'))
+    color = Column(VARCHAR(10))
+    km_estimado = Column(NUMBER(asdecimal=False))
+    tiempo_estimado = Column(NUMBER(asdecimal=False))
+    importe_estimado = Column(NUMBER(asdecimal=False))
+    oco_importe_extra = Column(NUMBER(asdecimal=False))
+    emp_idp = Column(VARCHAR(10))
+    emp_razon_social = Column(VARCHAR(100))
+    emp_cif = Column(VARCHAR(30))
+    emp_alias = Column(VARCHAR(50))
+    exp_id = Column(NUMBER(8, 0, False))
+    egl_nombre = Column(VARCHAR(100))
+    veh_mat_tractora = Column(VARCHAR(12))
+    veh_mat_remolque = Column(VARCHAR(12))
+    con_nombre_cond1 = Column(VARCHAR(100))
+    con_nombre_cond2 = Column(VARCHAR(100))
+    ot_vacio_id = Column(NUMBER(8, 0, False))
+    ot_vacio_org_zona = Column(VARCHAR(5))
+    ot_vacio_org_poblacion = Column(VARCHAR(200))
+    ot_vacio_kms = Column(NUMBER(asdecimal=False))
+    ot_vacio_importe = Column(NUMBER(asdecimal=False))
+    fac_num_oficial = Column(VARCHAR(20))
+    otl_cantidad = Column(NUMBER(asdecimal=False))
+    otl_unidad = Column(CHAR(1))
+    otl_org_fecha = Column(DateTime)
+    otl_org_fecha_prevista = Column(DateTime)
+    otl_org_fecha_real = Column(DateTime)
+    otl_org_fecha_inicio = Column(DateTime)
+    otl_org_fecha_fin = Column(DateTime)
+    otl_org_direccion_id = Column(NUMBER(6, 0, False))
+    dir_org_nombre = Column(VARCHAR(100))
+    dir_org_zona = Column(VARCHAR(5))
+    dir_org_poblacion = Column(VARCHAR(200))
+    dir_org_direccion = Column(VARCHAR(200))
+    dir_org_latitud = Column(NUMBER(asdecimal=False))
+    dir_org_longitud = Column(NUMBER(asdecimal=False))
+    otl_des_fecha = Column(DateTime)
+    otl_des_fecha_prevista = Column(DateTime)
+    otl_des_fecha_real = Column(DateTime)
+    otl_des_fecha_inicio = Column(DateTime)
+    otl_des_fecha_fin = Column(DateTime)
+    otl_des_direccion_id = Column(NUMBER(6, 0, False))
+    dir_des_nombre = Column(VARCHAR(100))
+    dir_des_zona = Column(VARCHAR(5))
+    dir_des_poblacion = Column(VARCHAR(200))
+    dir_des_direccion = Column(VARCHAR(200))
+    dir_des_latitud = Column(NUMBER(asdecimal=False))
+    dir_des_longitud = Column(NUMBER(asdecimal=False))
+    dim_metros = Column(NUMBER(asdecimal=False))
+    dim_peso = Column(NUMBER(asdecimal=False))
+    dim_fc = Column(NUMBER(asdecimal=False))
+    remolque2 = Column(NUMBER(6, 0, False))
+    remolque3 = Column(NUMBER(6, 0, False))
+    veh_mat_remolque2 = Column(VARCHAR(12))
+    veh_mat_remolque3 = Column(VARCHAR(12))
+    kms_rutas = Column(VARCHAR(13))
+    grupo_tarifa = Column(NUMBER(7, 0, False))
+    id_parte = Column(NUMBER(asdecimal=False))
+    kms_nacionales = Column(NUMBER(asdecimal=False))
+    kms_internacionales = Column(NUMBER(asdecimal=False))
+    saltar_restriccion = Column(NUMBER(1, 0, False), nullable=False, server_default=text("0 "))
+    dimension = Column(ForeignKey('cf_dimensiones.id'))
+    telefono = Column(VARCHAR(100))
+    otl_org_gmt = Column(NUMBER(2, 0, False))
+    otl_des_gmt = Column(NUMBER(2, 0, False))
+    incidencia_calidad = Column(VARCHAR(50))
+
+    conductore = relationship('Conductore', primaryjoin='OrdenesTransporte.conductor1 == Conductore.id')
+    conductore1 = relationship('Conductore', primaryjoin='OrdenesTransporte.conductor2 == Conductore.id')
+    cf_dimensione = relationship('CfDimensione')
+    ordenes_transporte_estado = relationship('OrdenesTransporteEstado')
+    ordenes_transporte_estado_env = relationship('OrdenesTransporteEstadoEnv')
+    cm_empresa = relationship('CmEmpresa')
+    tarifas_proveedor = relationship('TarifasProveedor')
+
+
 class PedidosEtapa(Base):
     __tablename__ = 'pedidos_etapas'
     __table_args__ = (
         CheckConstraint('ETAPA BETWEEN 1 AND 99'),
-        Index('ind_pedidos_etapa_dir', 'direccion', 'ide', 'pedido', 'etapa'),
         Index('ind_ped_etap_fecha', 'ide', 'pedido', 'etapa', 'fecha'),
+        Index('ind_pedidos_etapa_dir', 'direccion', 'ide', 'pedido', 'etapa'),
         Index('ide_ped_etapas_fecreal', 'ide', 'pedido', 'etapa', 'fecha_real', 'fecha')
     )
 
@@ -1033,3 +1337,84 @@ class TarifasClienteEtapa(Base):
 
     direccione = relationship('Direccione')
     tarifas_cliente = relationship('TarifasCliente')
+
+
+class ExpedicionesPeOt(Base):
+    __tablename__ = 'expediciones_pe_ot'
+    __table_args__ = (
+        ForeignKeyConstraint(['ide', 'expedicion'], ['expediciones.ide', 'expediciones.id']),
+        ForeignKeyConstraint(['ide', 'ot'], ['ordenes_transporte.ide', 'ordenes_transporte.id']),
+        ForeignKeyConstraint(['ide', 'pedido'], ['pedidos.ide', 'pedidos.id']),
+        Index('expediciones_pe_ot_ide_ped', 'ide', 'pedido'),
+        Index('expediciones_pe_ot_ide', 'ide', 'ot')
+    )
+
+    ide = Column(NUMBER(10, 0, False), primary_key=True, nullable=False)
+    expedicion = Column(NUMBER(10, 0, False), primary_key=True, nullable=False)
+    pedido = Column(NUMBER(10, 0, False), primary_key=True, nullable=False)
+    ot = Column(NUMBER(10, 0, False), primary_key=True, nullable=False)
+
+    expedicione = relationship('Expedicione')
+    ordenes_transporte = relationship('OrdenesTransporte')
+    pedido1 = relationship('Pedido')
+
+
+class OrdenesTransporteLinea(Base):
+    __tablename__ = 'ordenes_transporte_lineas'
+    __table_args__ = (
+        ForeignKeyConstraint(['ide', 'ot'], ['ordenes_transporte.ide', 'ordenes_transporte.id']),
+        Index('ind_ot_lineas_pedido', 'pedido', 'ot', 'etapa_t'),
+        Index('ind_ot_lineas_dir', 'direccion', 'ot', 'etapa_t')
+    )
+
+    ide = Column(NUMBER(3, 0, False), primary_key=True, nullable=False, server_default=text("1 "))
+    ot = Column(NUMBER(8, 0, False), primary_key=True, nullable=False)
+    etapa_t = Column(NUMBER(2, 0, False), primary_key=True, nullable=False)
+    etapa_p = Column(NUMBER(2, 0, False))
+    ide_pedido = Column(NUMBER(3, 0, False), server_default=text("1"))
+    pedido = Column(NUMBER(8, 0, False))
+    tipo = Column(CHAR(1))
+    direccion = Column(ForeignKey('direcciones.id'))
+    cantidad = Column(NUMBER(asdecimal=False))
+    tractora = Column(NUMBER(6, 0, False))
+    semi = Column(NUMBER(6, 0, False))
+    unidad = Column(CHAR(1))
+    conductor1 = Column(ForeignKey('conductores.id'))
+    conductor2 = Column(ForeignKey('conductores.id'))
+    referencia = Column(VARCHAR(30))
+    fecha = Column(DateTime)
+    hora = Column(VARCHAR(5), server_default=text("'00:01'"))
+    fecha_real = Column(DateTime)
+    hora_real = Column(VARCHAR(5), server_default=text("null"))
+    observaciones = Column(VARCHAR(200))
+    kms = Column(NUMBER(asdecimal=False))
+    fecha_inicio = Column(DateTime)
+    fecha_fin = Column(DateTime)
+    pais = Column(VARCHAR(2))
+    cpa = Column(VARCHAR(3))
+    poblacion = Column(VARCHAR(60))
+    calle = Column(VARCHAR(200))
+    latitud = Column(VARCHAR(20))
+    longitud = Column(VARCHAR(20))
+    palets = Column(NUMBER(asdecimal=False))
+    kgs = Column(NUMBER(asdecimal=False))
+    metros = Column(NUMBER(asdecimal=False))
+    coincide_direccion = Column(NUMBER(1, 0, False))
+    presencia_conductor = Column(NUMBER(1, 0, False))
+    accion_conductor = Column(NUMBER(1, 0, False))
+    tipo_incidencia = Column(NUMBER(6, 0, False))
+    gmt = Column(NUMBER(asdecimal=False))
+    ponumber = Column(VARCHAR(200))
+    km_aux = Column(NUMBER(asdecimal=False))
+    id_linea = Column(NUMBER(9, 0, False))
+    nombre = Column(VARCHAR(200))
+    zona = Column(VARCHAR(10))
+    cp = Column(VARCHAR(10))
+    codigo_externo = Column(VARCHAR(20))
+    eta_automatica = Column(DateTime)
+    etd = Column(DateTime)
+
+    conductore = relationship('Conductore', primaryjoin='OrdenesTransporteLinea.conductor1 == Conductore.id')
+    conductore1 = relationship('Conductore', primaryjoin='OrdenesTransporteLinea.conductor2 == Conductore.id')
+    direccione = relationship('Direccione')
+    ordenes_transporte = relationship('OrdenesTransporte')
