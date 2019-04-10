@@ -226,7 +226,7 @@ def verificar_otros_datos(context, pedido):
 def procesar_pedido(context, pedido):
     log.info("     (%s %s)" % (pedido.id, pedido.referencia_cliente))
     if not verificar_vda(context, pedido):
-        localizar_albaran(context, pedido)
+#        localizar_albaran(context, pedido)
         return
     verificar_fechas(context, pedido)
     verificar_otros_datos(context, pedido)
@@ -290,9 +290,12 @@ if __name__ == "__main__":
         log.error(traceback.format_tb(sys.exc_info()[2]))
         retval = 1
     finally:
-        context.gt_ses.close()
+        context.site3_ses.close()
+        context.site1_ses.close()
+        context.core_ses.close()
         context.mtb_ses.close()
-
+        context.gt_ses.close()
+        
     log.info("<===== Fin (%s)" % os.getpid())
     sys.exit(retval)
 
