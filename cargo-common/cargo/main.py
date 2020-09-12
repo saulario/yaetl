@@ -29,8 +29,10 @@ if __name__ == "__main__":
     usu.usueml = "sdjfs"
     usu.usupwd = "lsdfjlskdfj"
     usuBL.insert(connection, usu)
+    usuBL.update(connection, usu)
+    usuBL.delete(connection, usu.id)
 
-    stmt = usuBL.select().where(usuBL.c().id >= 0)
+    stmt = usuBL.select().where(usuBL.getTable().columns["id"] >= 0)
     rows = connection.execute(stmt)
     for row in rows:
         print(row.id)

@@ -7,11 +7,6 @@ class Entity():
 
     @staticmethod
     def fromProxy(proxy):
-        """
-        Construye una entidad a partir de un proxy  
-        param:      proxy: ResultProxy
-        returns:    entity: obtenido el resultproxy
-        """
         if proxy is None:
             return
         e = Entity()
@@ -22,11 +17,6 @@ class Entity():
 
     @staticmethod
     def fromTable(table):
-        """
-        Construye una entidad a partir de los metadatos de una tabla
-        param:      table: Tabla
-        returns:    entity: obtenida a partir de los metadatos
-        """
         if table is None:
             return
         e = Entity()
@@ -37,15 +27,16 @@ class Entity():
 
 class BaseDAL():
 
-    def __init__(self, metadata, nombre):
+    def __init__(self, metadata, nombre, pk="id"):
         self._metadata = metadata
         self._t = Table(nombre, metadata, autoload = True)
+        self._pk = pk
 
 
     def _read(self, conn, id):
         if id is None:
             return None
-        stmt = self._t.select().where(self._t.c.id == id)
+        stmt = self._t.select().where(self._t.columns[self._pk] == id)
         return Entity.fromProxy(conn.execute(stmt).fetchone())
 
 
@@ -65,17 +56,18 @@ class BaseDAL():
     def _update(self, conn, entity):
         if entity is None:
             return None
-        id = entity.id
-        d = entity.__dict__
+        d = entity.__dict__.copy()
         d.pop("id")
-        stmt = self._t.update(None).values(d).where(self._t.c.id == id)
+        stmt = self._t.update(None).values(d).\
+                where(self._t.columns[self._pk] == entity.__dict__[self._pk])
         return conn.execute(stmt)
 
 
     def _delete(self, conn, id):
         if id is None:
             return None
-        stmt = self._t.delete(None).where(self._t.c.id == id)
+        stmt = self._t.delete(None).\
+                where(self._t.columns[self._pk] == id)
         return conn.execute(stmt)
 
 
@@ -123,8 +115,8 @@ class OptimisticLockException(Exception):
 
 class BaseBL(BaseDAL):
 
-    def __init__(self, metadata, nombre):
-        super().__init__(metadata, nombre)
+    def __init__(self, metadata, nombre, pk = "id"):
+        super().__init__(metadata, nombre, pk)
 
 
     def read(self, conn, id, upi=None):
@@ -155,8 +147,6 @@ class BaseBL(BaseDAL):
         retval = self._update(conn, entity)
         self._after_update(conn, entity, upi)
         return retval
-
-
 
 
     def _before_delete(self, conn, entity, upi):
