@@ -3,7 +3,7 @@
 
 from cargo.bl.basedal import BaseDAL
 
-class R01DAL(BaseDAL):
+class R01BL(BaseDAL):
 
     def __init__(self, metadata):
         super().__init__(metadata, "r01")

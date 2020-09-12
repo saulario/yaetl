@@ -5,7 +5,7 @@ import logging
 
 from sqlalchemy import create_engine, MetaData, Table
 
-import cargo.bl.inf as bli
+from cargo.bl.inf.UsuBL import UsuBL
 
 log = logging.getLogger(__name__)
 
@@ -16,21 +16,26 @@ if __name__ == "__main__":
     metadata = MetaData(bind=engine)
     connection = engine.connect()
 
-    usuDAL = bli.UsuDAL(metadata)
-    rows = connection.execute(usuDAL.select()).fetchall()
+    tx = connection.begin()
 
-    usu = usuDAL.read(connection, 1)
-    result = usuDAL.update(connection, usu)
+    usuBL = UsuBL(metadata)
+    row = usuBL.read(connection, 1)
+    row = usuBL.read(connection, 2)
 
-    susDAL = bli.SusDAL(metadata)
-    rows = connection.execute(susDAL.select()).fetchall()
+    usu = usuBL.getEntity()
+    usu.active = 1
+    usu.usuaka = "12312"
+    usu.usunom = "123sfsdf"
+    usu.usueml = "sdjfs"
+    usu.usupwd = "lsdfjlskdfj"
+    usuBL.insert(connection, usu)
+
+    stmt = usuBL.select().where(usuBL.c().id >= 0)
+    rows = connection.execute(stmt)
     for row in rows:
-        print(row.susurl)
-
-    r01DAL = bli.R01DAL(metadata)
-    rows = connection.execute(r01DAL.select()).fetchall()
+        print(row.id)
 
 
-
+    tx.rollback()
     connection.close()
     log.info("<----- Fin")

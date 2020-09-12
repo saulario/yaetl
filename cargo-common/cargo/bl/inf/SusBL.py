@@ -3,7 +3,7 @@
 
 from cargo.bl.basedal import BaseDAL
 
-class SusDAL(BaseDAL):
+class SusBL(BaseDAL):
 
     def __init__(self, metadata):
         super().__init__(metadata, "sus")
