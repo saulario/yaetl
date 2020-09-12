@@ -5,6 +5,7 @@ import logging
 
 from sqlalchemy import create_engine, MetaData, Table
 
+from cargo.bl.inf.SesBL import SesBL
 from cargo.bl.inf.UsuBL import UsuBL
 
 log = logging.getLogger(__name__)
@@ -37,7 +38,11 @@ if __name__ == "__main__":
     for row in rows:
         print(row.id)
 
+    sesBL = SesBL(metadata)
+    ses = sesBL.getEntity()
+    ses.sesusu_id = 1
+    sesBL.insert(connection, ses)
 
-    tx.rollback()
+    tx.commit()
     connection.close()
     log.info("<----- Fin")

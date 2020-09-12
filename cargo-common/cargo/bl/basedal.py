@@ -46,7 +46,8 @@ class BaseDAL():
         if "version" in entity.__dict__:
             entity.__dict__["version"] = 0
         d = entity.__dict__.copy()
-        d.pop("id")
+        if "id" in d:
+            d.pop("id")
         stmt = self._t.insert(None).values(d)
         result = conn.execute(stmt)
         entity.id = result.inserted_primary_key[0]

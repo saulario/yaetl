@@ -42,7 +42,6 @@ insert into usu ( [version], active, usuaka, usunom, usupwd, usueml)
     values(0, 1, 'ADMIN02', 'ADMINISTRADOR 02', '7Q3Hbin1WrdT', 'admin02@nomail.com');
 
 
-
 create table r01 (
     [id] bigint identity (1,1) primary key,
     [version] bigint not null default 0,
@@ -67,3 +66,16 @@ insert into r01 ([version], active, r01sus_id, r01usu_id, r01def)
         (select id from sus where susaka = 'LOGISTICA'),
         (select id from usu where usuaka = 'ADMIN02'),
         1);        
+
+
+create table ses (
+    sescod nvarchar(50) primary key,
+
+    sesusu_id bigint not null index ix_ses_sesusu_id,
+    sescre datetime2,                                                           -- creación
+    sesult datetime2,                                                           -- última actualización
+    sesval datetime2,                                                           -- validez
+    seshit bigint not null default 0,                                           -- peticiones
+
+    constraint fk_ses_usu foreign key (sesusu_id) references usu(id)
+);
