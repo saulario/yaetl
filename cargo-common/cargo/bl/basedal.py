@@ -27,10 +27,16 @@ class Entity():
 
 class BaseDAL():
 
-    def __init__(self, metadata, nombre, pk="id"):
+    SEQ_SUFFIX = "seq"
+    VERSION_SUFFIX = "ver"
+    ACTIVE_SUFFIX = "act"
+
+    def __init__(self, metadata, nombre, pk=None):
         self._metadata = metadata
         self._t = Table(nombre, metadata, autoload = True)
-        self._pk = pk
+        self._pk = pk if pk is not None else (nombre + BaseDAL.SEQ_SUFFIX)
+        self._version = nombre + BaseDAL.VERSION_SUFFIX
+        self._active = nombre + BaseDAL.ACTIVE_SUFFIX
 
 
     def _read(self, conn, id):
@@ -43,14 +49,15 @@ class BaseDAL():
     def _insert(self, conn, entity): 
         if entity is None:
             return None
-        if "version" in entity.__dict__:
-            entity.__dict__["version"] = 0
+        if self._version in entity.__dict__:
+            entity.__dict__[self._version] = 0
         d = entity.__dict__.copy()
-        if "id" in d:
-            d.pop("id")
+        if self._pk.endswith(BaseDAL.SEQ_SUFFIX) and self._pk in d:
+            d.pop(self._pk)
         stmt = self._t.insert(None).values(d)
         result = conn.execute(stmt)
-        entity.id = result.inserted_primary_key[0]
+        if self._pk.endswith(BaseDAL.SEQ_SUFFIX):
+            setattr(entity, self._pk, result.inserted_primary_key[0])
         return result
 
 
@@ -58,7 +65,8 @@ class BaseDAL():
         if entity is None:
             return None
         d = entity.__dict__.copy()
-        d.pop("id")
+        if self._pk.endswith(BaseDAL.SEQ_SUFFIX) and self._pk in d:
+            d.pop(self._pk)
         stmt = self._t.update(None).values(d).\
                 where(self._t.columns[self._pk] == entity.__dict__[self._pk])
         return conn.execute(stmt)
@@ -116,7 +124,7 @@ class OptimisticLockException(Exception):
 
 class BaseBL(BaseDAL):
 
-    def __init__(self, metadata, nombre, pk = "id"):
+    def __init__(self, metadata, nombre, pk=None):
         super().__init__(metadata, nombre, pk)
 
 

@@ -4,6 +4,7 @@
 import datetime as dt
 import uuid
 
+from cargo import default
 from cargo.bl.basedal import BaseBL
 
 class SesBL(BaseBL):
@@ -15,6 +16,13 @@ class SesBL(BaseBL):
     def _before_insert(self, conn, entity, upi):
         entity.sescod = uuid.uuid4()
         entity.sescre = entity.sesult = dt.datetime.utcnow()
-        entity.sesval = entity.sescre + dt.timedelta(hours=8)
+        entity.sesval = entity.sescre + default.SESSION_DURATION
         entity.seshit = 0
+
+    
+    def crearSesion(self, conn, ususeq):
+        entity = self.getEntity()
+        entity.sesususeq = ususeq
+        result = self.insert(conn, entity)
+        return entity
 

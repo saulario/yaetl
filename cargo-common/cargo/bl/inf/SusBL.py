@@ -9,4 +9,7 @@ class SusBL(BaseDAL):
         super().__init__(metadata, "sus")
 
 
+    def getSuscripciones(self, conn, usuario):
+        return []
+
 

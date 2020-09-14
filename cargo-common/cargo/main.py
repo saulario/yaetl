@@ -5,10 +5,16 @@ import logging
 
 from sqlalchemy import create_engine, MetaData, Table
 
+
+
+import cargo.default as default
+
 from cargo.bl.inf.SesBL import SesBL
 from cargo.bl.inf.UsuBL import UsuBL
 
+logging.basicConfig(level=logging.DEBUG, format=default.LOG_FORMAT)
 log = logging.getLogger(__name__)
+
 
 if __name__ == "__main__":
     log.info("-----> Inicio")
@@ -24,24 +30,17 @@ if __name__ == "__main__":
     row = usuBL.read(connection, 2)
 
     usu = usuBL.getEntity()
-    usu.active = 1
+    usu.usuact = 1
     usu.usuaka = "12312"
     usu.usunom = "123sfsdf"
     usu.usueml = "sdjfs"
     usu.usupwd = "lsdfjlskdfj"
     usuBL.insert(connection, usu)
+    usu.usunom, usu.usueml = usu.usueml, usu.usunom
     usuBL.update(connection, usu)
-    usuBL.delete(connection, usu.id)
+    usuBL.delete(connection, usu.ususeq)
 
-    stmt = usuBL.select().where(usuBL.getTable().columns["id"] >= 0)
-    rows = connection.execute(stmt)
-    for row in rows:
-        print(row.id)
-
-    sesBL = SesBL(metadata)
-    ses = sesBL.getEntity()
-    ses.sesusu_id = 1
-    sesBL.insert(connection, ses)
+    upi = usuBL.login(connection, " admin01 ", "0lAmUe9MgNi3")
 
     tx.commit()
     connection.close()
