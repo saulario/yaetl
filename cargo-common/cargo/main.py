@@ -5,11 +5,10 @@ import logging
 
 from sqlalchemy import create_engine, MetaData, Table
 
-
-
 import cargo.default as default
 
 from cargo.bl.inf.SesBL import SesBL
+from cargo.bl.inf.SusBL import SusBL
 from cargo.bl.inf.UsuBL import UsuBL
 
 logging.basicConfig(level=logging.DEBUG, format=default.LOG_FORMAT)
@@ -22,8 +21,6 @@ if __name__ == "__main__":
     engine = create_engine("mssql+pymssql://sa:mssql!123@localhost/C000000")
     metadata = MetaData(bind=engine)
     connection = engine.connect()
-
-    tx = connection.begin()
 
     usuBL = UsuBL(metadata)
     row = usuBL.read(connection, 1)
@@ -40,8 +37,11 @@ if __name__ == "__main__":
     usuBL.update(connection, usu)
     usuBL.delete(connection, usu.ususeq)
 
-    upi = usuBL.login(connection, " admin01 ", "0lAmUe9MgNi3")
+    sessionInfo = usuBL.login(connection, " admin01 ", "0lAmUe9MgNi3")
 
-    tx.commit()
+    result = SesBL(metadata).comprobarSesion(connection, sessionInfo.ses.sescod, 1)
+    result = SesBL(metadata).comprobarSesion(connection, sessionInfo.ses.sescod, 5)
+    result = SesBL(metadata).comprobarSesion(connection, sessionInfo.ses.sescod, 1)
+
     connection.close()
     log.info("<----- Fin")

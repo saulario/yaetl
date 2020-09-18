@@ -13,7 +13,7 @@ from cargo.bl.inf.SusBL import SusBL
 log = logging.getLogger(__name__)
 
 
-class UserProfileInfo:
+class SessionInfo:
     pass
 
 class UsuBL(BaseBL):
@@ -30,27 +30,24 @@ class UsuBL(BaseBL):
             log.info("<----- Salida, usuario o password nulo")
             return None
 
-        stmt = self.getTable().select().where(and_(
+        stmt = self.t.select().where(and_(
             or_(
-                self.c().usuaka == str.upper(str.strip(user)),
-                self.c().usueml == str.strip(user)
+                self.c.usuaka == str.upper(str.strip(user)),
+                self.c.usueml == str.strip(user)
             ),
-            self.c().usupwd == str.strip(password),
-            self.c().usuact == 1
+            self.c.usupwd == str.strip(password),
+            self.c.usuact == 1
         ))
-        row = conn.execute(stmt).fetchone()
-        if row is None:
+        usu = conn.execute(stmt).fetchone()
+        if usu is None:
             log.info("<----- Salida, usuario no encontrado")            
-            return
+            return None
 
-        upi = UserProfileInfo()
-        upi.usu = Entity.fromProxy(row)
-        upi.usu.usupwd = "*" * 5
-
-        upi.suss = SusBL(self._metadata).getSuscripciones(conn, row.ususeq)
-
-        ses = SesBL(self._metadata).crearSesion(conn, upi.usu.ususeq)
-        upi.sescod = ses.sescod
+        si = SessionInfo()
+        si.usu = Entity.fromProxy(usu)
+        si.usu.usupwd = "*" * 5
+        si.suss = SusBL(self._metadata).getSuscripcionesActivas(conn, usu.ususeq)
+        si.ses = SesBL(self._metadata).crearSesion(conn, usu.ususeq)
 
         log.info("<----- Fin")
-        return upi
+        return si

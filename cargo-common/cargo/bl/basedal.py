@@ -31,10 +31,11 @@ class BaseDAL():
     VERSION_SUFFIX = "ver"
     ACTIVE_SUFFIX = "act"
 
-    def __init__(self, metadata, nombre, pk=None):
+    def __init__(self, metadata, nombre, pk=None, schema=None):
         self._metadata = metadata
         self._t = Table(nombre, metadata, autoload = True)
         self._pk = pk if pk is not None else (nombre + BaseDAL.SEQ_SUFFIX)
+        self._schema = schema
         self._version = nombre + BaseDAL.VERSION_SUFFIX
         self._active = nombre + BaseDAL.ACTIVE_SUFFIX
 
@@ -96,8 +97,14 @@ class BaseDAL():
         return self._t
 
 
+    @property
     def c(self):
         return self._t.c
+
+
+    @property
+    def t(self):
+        return self._t
 
 
     def getEntity(self):
@@ -124,12 +131,17 @@ class OptimisticLockException(Exception):
 
 class BaseBL(BaseDAL):
 
-    def __init__(self, metadata, nombre, pk=None):
-        super().__init__(metadata, nombre, pk)
+    def __init__(self, metadata, nombre, pk=None, schema=None):
+        super().__init__(metadata, nombre, pk, schema)
 
+
+    def _after_read(self, conn, entity, upi):
+        pass
 
     def read(self, conn, id, upi=None):
-        return self._read(conn, id)
+        entity = self._read(conn, id)
+        self._after_read(conn, entity, upi)
+        return entity
 
 
     def _before_insert(self, conn, entity, upi):

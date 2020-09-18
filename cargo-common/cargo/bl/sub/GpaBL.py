@@ -3,7 +3,7 @@
 
 from cargo.bl.basedal import BaseBL
 
-class R01BL(BaseBL):
+class GpaBL(BaseBL):
 
     def __init__(self, metadata):
-        super().__init__(metadata, "r01")
+        super().__init__(metadata, "gpa", "gpacod")
