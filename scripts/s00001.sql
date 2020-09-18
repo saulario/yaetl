@@ -1,7 +1,3 @@
-
-
-
-
 drop table if exists gcl;
 drop table if exists gpr;
 
@@ -10,6 +6,17 @@ drop table if exists ges;
 drop table if exists gpa;
 
 drop table if exists gdi;
+
+drop table if exists usc;
+drop table if exists usb;
+drop table if exists usa;
+
+drop table if exists gup;
+drop table if exists guo;
+
+drop table if exists gub;
+drop table if exists gua;
+
 
 create table gdi (
     gdicod nvarchar(5) primary key,
@@ -4210,4 +4217,119 @@ create table gpr (
     index ix_gpr_gprextcod unique (gprextcod),
     index ix_gpr_gpraka unique (gpraka),
 );
+
+
+
+
+
+create table gua (
+    guacod nvarchar(10) primary key,
+    guaver bigint not null default 0,
+    guaact smallint not null default 0,
+    guanom nvarchar(40)
+);
+
+insert into gua values ('DEFAULT', 0, 1, 'DEFAULT ADMINISTRATIVE UNIT');
+
+create table gub (
+    gubseq bigint identity(1, 1) primary key,
+    gubver bigint not null default 0,
+    gubact smallint not null default 0,
+
+    gubguacod nvarchar(10) index ix_gub_gubguacod,
+    gubnom nvarchar(40) not null,
+    gubexr nvarchar(20) not null,
+    gubpri int not null default 0,
+
+    constraint fk_gub_gua foreign key (gubguacod) references gua(guacod)
+);
+
+insert into gub (gubver, gubact, gubguacod, gubnom, gubexr, gubpri)
+    values(0, 1, 'DEFAULT', 'ALL ZONES', '.+', 2);
+
+
+create table guo (
+    guocod nvarchar(10) primary key,
+    guover bigint not null default 0,
+    guoact smallint not null default 0,
+    guonom nvarchar(40)
+);
+
+insert into guo values ('DEFAULT', 0, 1, 'DEFAULT OPERATIONAL UNIT');
+
+create table gup (
+    gupseq bigint identity(1, 1) primary key,
+    gupver bigint not null default 0,
+    gupact smallint not null default 0,
+
+    gupguocod nvarchar(10) index ix_gup_gupguocod,
+    gupnom nvarchar(40) not null,
+    gupexr nvarchar(20) not null,
+    guppri int not null default 0,
+
+    constraint fk_gup_guo foreign key (gupguocod) references guo(guocod)
+);
+
+insert into gup (gupver, gupact, gupguocod, gupnom, gupexr, guppri)
+    values(0, 1, 'DEFAULT', 'ALL ZONES', '.+', 2);
+
+
+create table usa (
+    usacod bigint primary key,
+    usaver bigint not null default 0,
+    usaact smallint not null default 0,
+
+    usaaka nvarchar(20) not null default '',
+    usanom nvarchar(100) not null default '',
+    usaeml nvarchar(200) not null default '',
+    usaadm smallint not null default 0,
+
+    index ix_usa_usaaka unique (usaaka),
+    index ix_usa_usaeml unique (usaeml)
+);
+
+insert into usa select ususeq, 0, 1, usuaka, usunom, usueml, 1 from [c000000].[dbo].[usu];
+
+
+create table usb (
+    usbseq bigint identity(1, 1) primary key,
+    usbver bigint not null default 0,
+    usbact smallint not null default 0,
+
+    usbusucod bigint not null index ix_usb_usbusucod,
+    usbguacod nvarchar(10) not null index ix_usb_usbguacod,
+
+    constraint fk_usb_gua foreign key (usbguacod) references gua(guacod)
+);
+
+insert into usb (usbver, usbact, usbusucod, usbguacod) values (0, 1,
+    (select usacod from usa where usaaka = 'ADMIN01' ),
+    'DEFAULT'
+    );
+insert into usb (usbver, usbact, usbusucod, usbguacod) values (0, 1,
+    (select usacod from usa where usaaka = 'ADMIN02' ),
+    'DEFAULT'
+    );
+
+
+create table usc (
+    uscseq bigint identity(1, 1) primary key,
+    uscver bigint not null default 0,
+    uscact smallint not null default 0,
+
+    uscusucod bigint not null index ix_usc_uscusucod,
+    uscguocod nvarchar(10) not null index ix_usc_uscguocod,
+
+    constraint fk_usc_guo foreign key (uscguocod) references guo(guocod)
+);
+
+insert into usc (uscver, uscact, uscusucod, uscguocod) values (0, 1,
+    (select usacod from usa where usaaka = 'ADMIN01' ),
+    'DEFAULT'
+    );
+insert into usc (uscver, uscact, uscusucod, uscguocod) values (0, 1,
+    (select usacod from usa where usaaka = 'ADMIN02' ),
+    'DEFAULT'
+    );
+
 
