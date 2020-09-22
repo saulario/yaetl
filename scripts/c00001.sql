@@ -1,3 +1,6 @@
+drop table if exists nus;
+drop table if exists nsu;
+
 drop table if exists ses;
 drop table if exists r01;
 drop table if exists sus;
@@ -79,4 +82,33 @@ create table ses (
     seshit bigint not null default 0,                                           -- peticiones
 
     constraint fk_ses_usu foreign key (sesususeq) references usu(ususeq)
+);
+
+
+create table nus (
+    nuscod nvarchar(50) primary key,
+
+    nusususeq bigint not null index ix_nus_nusususeq,
+    nussusseq bigint not null index ix_nus_nussusseq,
+    nusfecini datetime2,
+    nusfecfin datetime2,
+    nusmod bigint not null default 0,
+
+    constraint fk_nus_usu foreign key (nusususeq) references usu(ususeq),
+    constraint fk_nus_sus foreign key (nussusseq) references sus(susseq)
+);
+
+
+create table nsu (
+    nsucod nvarchar(50) primary key,
+
+    nsususseq bigint not null index ix_nsu_nsususseq,
+    nsufecini datetime2,
+    nsufecfin datetime2,
+    nsumod bigint not null default 0,
+
+    nsuususeq bigint not null index ix_nsu_nsuususeq,
+
+    constraint fk_nsu_sus foreign key (nsususseq) references sus(susseq),
+    constraint fk_nsu_usu foreign key (nsuususeq) references usu(ususeq),    
 );

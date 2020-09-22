@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+import datetime as dt
 import logging
 
 from sqlalchemy import create_engine, MetaData, Table
@@ -40,9 +41,27 @@ if __name__ == "__main__":
     sessionInfo = usuBL.login(connection, " admin01 ", "0lAmUe9MgNi3")
     sessionInfo = usuBL.login(connection, " admin01 ", "0lAmUe9MgNi3")
 
+    """
     result = SesBL(metadata).comprobarSesion(connection, sessionInfo.ses.sescod, 1)
     result = SesBL(metadata).comprobarSesion(connection, sessionInfo.ses.sescod, 5)
     result = SesBL(metadata).comprobarSesion(connection, sessionInfo.ses.sescod, 1)
+    """
+
+    tx = connection.begin()
+
+    susBL = SusBL(metadata)
+    ahora = dt.datetime.utcnow()
+
+    usu = usuBL.read(connection, 1)
+    sus = susBL.getEntity()
+    sus.susact = 1
+    sus.susaka = "LAMIA"
+    sus.susnom = "ESTA ES LA MIA"
+    sus.susmod = 64
+    sus.susurl = "No tiene URL"
+    susBL.crearSuscripcion(connection, sus, usu, ahora)
+
+    tx.commit()
 
     connection.close()
     log.info("<----- Fin")

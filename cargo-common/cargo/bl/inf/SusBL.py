@@ -5,16 +5,33 @@ import logging
 
 from sqlalchemy import and_, join, select
 
-from cargo.bl.basedal import BaseBL, Entity
+import cargo.default as defaults
+
+from cargo.bl.basedal import BaseBL, Entity, IllegalStateException
+from cargo.bl.inf.NsuBL import NsuBL
+from cargo.bl.inf.NusBL import NusBL
 from cargo.bl.inf.R01BL import R01BL
 
 
 log = logging.getLogger(__name__)
 
+
 class SusBL(BaseBL):
 
     def __init__(self, metadata):
         super().__init__(metadata, "sus")
+
+
+    def _before_insert(self, conn, sus, upi=None):
+        self._validarFormato(sus)
+
+
+    def _before_update(self, conn, sus, upi=None):
+        self._validarFormato(sus)
+
+    
+    def _validarFormato(self, sus):
+        sus.susmod &= defaults.MODULOS_MAXVALUE
 
 
     def getSuscripcionesActivas(self, conn, ususeq):
@@ -31,4 +48,14 @@ class SusBL(BaseBL):
         result = [ Entity.fromProxy(x) for x in conn.execute(stmt).fetchall() ]
 
         log.info(f"<----- Fin ({len(result)})")
+        return result
+
+    
+    def crearSuscripcion(self, conn, sus, usu, fecha, upi=None):
+        log.info("-----> Inicio")
+
+        result = self.insert(conn, sus, upi)
+        NsuBL(self._metadata).registrarCambioDeEstado(conn, sus, usu, fecha, upi)
+
+        log.info(f"<----- Fin ({sus.susseq})")
         return result
