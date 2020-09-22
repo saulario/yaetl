@@ -1,6 +1,3 @@
-use C000000;
-go
-
 drop table if exists ses;
 drop table if exists r01;
 drop table if exists sus;
@@ -13,14 +10,15 @@ create table sus (
 
     susaka nvarchar(20) not null default '',
     susnom nvarchar(100) not null default '',
+    susmod bigint not null default 0,
     susurl nvarchar(max) not null default ''
 
 );
 
-insert into sus (susver, susact, susaka, susnom, susurl)
-    values (0, 1, 'TRANSPORTE', 'EMPRESA DE TRANSPORTES SL', 'mssql+pymssql://sa:mssql!123@localhost/S000001')
-insert into sus (susver, susact, susaka, susnom, susurl)
-    values (0, 1, 'LOGISTICA', 'EMPRESA DE LOGISTICA SL', 'mssql+pymssql://sa:mssql!123@localhost/S000002')
+insert into sus (susver, susact, susaka, susnom, susmod, susurl)
+    values (0, 1, 'TRANSPORTE', 'EMPRESA DE TRANSPORTES SL', 128, 'mssql+pymssql://sa:mssql!123@localhost/S000001')
+insert into sus (susver, susact, susaka, susnom, susmod, susurl)
+    values (0, 1, 'LOGISTICA', 'EMPRESA DE LOGISTICA SL', 128, 'mssql+pymssql://sa:mssql!123@localhost/S000002')
 
 create table usu (
     ususeq bigint identity (1,1) primary key,
@@ -50,6 +48,7 @@ create table r01 (
 
     r01susseq bigint not null index ix_r01_r01susseq,
     r01ususeq bigint not null index ix_r01_r01ususeq,
+    r01mod bigint not null default 0,
     r01def smallint not null default 0,
 
     constraint fk_r01_sus foreign key (r01susseq) references sus(susseq),
@@ -57,20 +56,21 @@ create table r01 (
 
 );
 
-insert into r01 (r01ver, r01act, r01susseq, r01ususeq, r01def)
+insert into r01 (r01ver, r01act, r01susseq, r01ususeq, r01mod, r01def)
     values(0, 1,
         (select susseq from sus where susaka = 'TRANSPORTE'),
         (select ususeq from usu where usuaka = 'ADMIN01'),
-        1);
-insert into r01 (r01ver, r01act, r01susseq, r01ususeq, r01def)
+        128, 1);
+insert into r01 (r01ver, r01act, r01susseq, r01ususeq, r01mod, r01def)
     values(0, 1,
         (select susseq from sus where susaka = 'LOGISTICA'),
         (select ususeq from usu where usuaka = 'ADMIN02'),
-        1);        
+        128, 1);        
 
 
 create table ses (
     sescod nvarchar(50) primary key,
+    sesact smallint not null default 0,
 
     sesususeq bigint not null index ix_ses_sesususeq,
     sescre datetime2,                                                           -- creación

@@ -24,26 +24,50 @@ class SesBL(BaseBL):
     def _before_insert(self, conn, entity, upi):
         log.debug("-----> Inicio")
         entity.sescod = uuid.uuid4()
-        entity.sescre = entity.sesult = dt.datetime.utcnow()
-        entity.sesval = entity.sescre + default.SESSION_DURATION
-        entity.seshit = 0
         log.debug("<----- Fin")
-        
 
-    def _borrarSesionesCaducadas(self, conn):
+    
+    def _invalidarSesionesDeUsuario(self, conn, ususeq, fecha):
         log.debug("-----> Inicio")
-        stmt = self.t.delete(None).where(self.c.sesval <= dt.datetime.utcnow())
+        log.debug(f"     (ususeq): {ususeq}")
+
+        stmt = self.t.update(None).values(sesact=0, sesval=fecha).where(and_(
+            self.c.sesususeq == ususeq,
+            self.c.sesact == 1
+        ))
         conn.execute(stmt)
+        
+        log.debug("<----- Fin")
+
+
+    def _invalidarSesionesCaducadas(self, conn, fecha):
         log.debug("-----> Inicio")
+        log.debug(f"     (fecha) : {fecha}")
+
+        stmt = self.t.update(None).values(sesact=0, sesval=fecha).where(and_(
+            self.c.sesval < fecha,
+            self.c.sesact == 1
+        ))
+        conn.execute(stmt)
+
+        log.debug("<----- Fin")
 
 
     def crearSesion(self, conn, ususeq):
         log.info("-----> Inicio")
         log.info(f"     (ususeq): {ususeq}")
-        self._borrarSesionesCaducadas(conn)
+
+        ahora = dt.datetime.utcnow()
+        self._invalidarSesionesDeUsuario(conn, ususeq, ahora)
+
         entity = self.getEntity()
         entity.sesususeq = ususeq
+        entity.sesact = 1
+        entity.sescre = entity.sesult = ahora
+        entity.sesval = entity.sescre + default.SESSION_DURATION
+        entity.seshit = 0
         self.insert(conn, entity)
+        
         log.info("<----- Fin")
         return entity
 
@@ -55,6 +79,7 @@ class SesBL(BaseBL):
 
         retval = False
         ahora = dt.datetime.utcnow()
+        self._invalidarSesionesCaducadas(conn, ahora)
 
         ses = self.read(conn, sescod)
         if ses is None:

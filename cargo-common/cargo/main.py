@@ -38,6 +38,7 @@ if __name__ == "__main__":
     usuBL.delete(connection, usu.ususeq)
 
     sessionInfo = usuBL.login(connection, " admin01 ", "0lAmUe9MgNi3")
+    sessionInfo = usuBL.login(connection, " admin01 ", "0lAmUe9MgNi3")
 
     result = SesBL(metadata).comprobarSesion(connection, sessionInfo.ses.sescod, 1)
     result = SesBL(metadata).comprobarSesion(connection, sessionInfo.ses.sescod, 5)
