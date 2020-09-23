@@ -2,7 +2,8 @@ drop table if exists nus;
 drop table if exists nsu;
 
 drop table if exists ses;
-drop table if exists r01;
+drop table if exists uss;
+
 drop table if exists sus;
 drop table if exists usu;
 
@@ -44,30 +45,28 @@ insert into usu ( usuver, usuact, usuaka, usunom, usupwd, usueml)
     values(0, 1, 'ADMIN02', 'ADMINISTRADOR 02', '7Q3Hbin1WrdT', 'admin02@nomail.com');
 
 
-create table r01 (
-    r01seq bigint identity (1,1) primary key,
-    r01ver bigint not null default 0,
-    r01act smallint not null default 0,
+create table uss (
+    usscod nvarchar(50) primary key,
+    ussact smallint not null default 0,
 
-    r01susseq bigint not null index ix_r01_r01susseq,
-    r01ususeq bigint not null index ix_r01_r01ususeq,
-    r01mod bigint not null default 0,
-    r01def smallint not null default 0,
+    ussususeq bigint not null index ix_uss_ussususeq,
+    usssusseq bigint not null index ix_uss_usssusseq,
+    ussmod bigint not null default 0,
+    ussdef smallint not null default 0,
 
-    constraint fk_r01_sus foreign key (r01susseq) references sus(susseq),
-    constraint fk_r01_usu foreign key (r01ususeq) references usu(ususeq)
-
+    constraint fk_uss_usu foreign key (ussususeq) references usu(ususeq),
+    constraint fk_uss_sus foreign key (usssusseq) references sus(susseq)
 );
 
-insert into r01 (r01ver, r01act, r01susseq, r01ususeq, r01mod, r01def)
-    values(0, 1,
-        (select susseq from sus where susaka = 'TRANSPORTE'),
+insert into uss
+    values(newid(), 1,
         (select ususeq from usu where usuaka = 'ADMIN01'),
+        (select susseq from sus where susaka = 'TRANSPORTE'),
         128, 1);
-insert into r01 (r01ver, r01act, r01susseq, r01ususeq, r01mod, r01def)
-    values(0, 1,
-        (select susseq from sus where susaka = 'LOGISTICA'),
+insert into uss
+    values(newid(), 1,
         (select ususeq from usu where usuaka = 'ADMIN02'),
+        (select susseq from sus where susaka = 'LOGISTICA'),
         128, 1);        
 
 

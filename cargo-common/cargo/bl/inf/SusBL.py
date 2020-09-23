@@ -10,7 +10,7 @@ import cargo.default as defaults
 from cargo.bl.basedal import BaseBL, Entity, IllegalStateException
 from cargo.bl.inf.NsuBL import NsuBL
 from cargo.bl.inf.NusBL import NusBL
-from cargo.bl.inf.R01BL import R01BL
+from cargo.bl.inf.UsuBL import UsuBL
 
 
 log = logging.getLogger(__name__)
@@ -41,7 +41,7 @@ class SusBL(BaseBL):
         r01BL = R01BL(self._metadata)
         join = r01BL.t.join(self.t, r01BL.c.r01susseq == self.c.susseq)
         stmt = select([self.t]).select_from(join).where(and_(
-                r01BL.c.r01susseq == ususeq,
+                r01BL.c.r01ususeq == ususeq,
                 r01BL.c.r01act == 1,
                 self.c.susact == 1
             ))
@@ -52,10 +52,22 @@ class SusBL(BaseBL):
 
     
     def crearSuscripcion(self, conn, sus, usu, fecha, upi=None):
+        """
+        Crear una suscripción tiene las siguientes implicaciones
+            · El usuario necesariamente debe existir
+            · Insertar la suscripción como tal
+            · Registrar un cambio de estado para que permita facturar 
+            · Activa la suscripción para el usuario con el máximo de permisos
+        """
         log.info("-----> Inicio")
+        log.info(f"     (susaka): {sus.susaka}")
+        log.info(f"     (ususeq): {usu.ususeq}")
+        log.info(f"     (fecha) : {fecha}")
+
 
         result = self.insert(conn, sus, upi)
         NsuBL(self._metadata).registrarCambioDeEstado(conn, sus, usu, fecha, upi)
+        UsuBL(self._metadata).activarSuscripcion(conn, usu, sus, fecha, upi)
 
         log.info(f"<----- Fin ({sus.susseq})")
         return result

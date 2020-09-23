@@ -8,7 +8,7 @@ from sqlalchemy import and_, or_
 from cargo.bl.basedal import BaseBL, Entity
 from cargo.bl.inf.SesBL import SesBL
 from cargo.bl.inf.SusBL import SusBL
-
+from cargo.bl.inf.UssBL import UssBL
 
 log = logging.getLogger(__name__)
 
@@ -20,6 +20,27 @@ class UsuBL(BaseBL):
 
     def __init__(self, metadata):
         super().__init__(metadata, "usu")
+
+
+    def activarSuscripcion(self, conn, usu, sus, fecha, upi=None):
+        """
+        Activar una suscripción para un usuario tiene las siguientes implicaciones
+        """
+        log.info("-----> Inicio")
+        log.info(f"     (ususeq): {usu.ususeq}")
+        log.info(f"     (susseq): {sus.susseq}")
+        log.info(f"     (fecha) : {sus.susseq}")
+
+        ussBL = UssBL(self._metadata)
+        uss = ussBL.getEntity()
+        uss.ussact = 1
+        uss.ussususeq = usu.ususeq
+        uss.usssusseq = sus.susseq
+        uss.ussmod = sus.susmod
+        uss.ussdef = 0
+        ussBL._activarSuscripcion(conn, uss, fecha, upi)
+
+        log.info("<----- Fin")
 
 
     def login(self, conn, user, password):
