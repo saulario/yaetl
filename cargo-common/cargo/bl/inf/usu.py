@@ -5,10 +5,11 @@ import logging
 
 from sqlalchemy import and_, or_
 
+import cargo.bl.inf.SesBL
+import cargo.bl.inf.SusBL
+import cargo.bl.inf.UssBL
+
 from cargo.bl.basedal import BaseBL, Entity
-from cargo.bl.inf.SesBL import SesBL
-from cargo.bl.inf.SusBL import SusBL
-from cargo.bl.inf.UssBL import UssBL
 
 log = logging.getLogger(__name__)
 
@@ -31,7 +32,7 @@ class UsuBL(BaseBL):
         log.info(f"     (susseq): {sus.susseq}")
         log.info(f"     (fecha) : {sus.susseq}")
 
-        ussBL = UssBL(self._metadata)
+        ussBL = cargo.bl.inf.UssBL.UssBL(self._metadata)
         uss = ussBL.getEntity()
         uss.ussact = 1
         uss.ussususeq = usu.ususeq
@@ -67,8 +68,8 @@ class UsuBL(BaseBL):
         si = SessionInfo()
         si.usu = Entity.fromProxy(usu)
         si.usu.usupwd = "*" * 5
-        si.suss = SusBL(self._metadata).getSuscripcionesActivas(conn, usu.ususeq)
-        si.ses = SesBL(self._metadata).crearSesion(conn, usu.ususeq)
+        si.suss = cargo.bl.inf.SusBL.SusBL(self._metadata).getSuscripcionesActivas(conn, usu.ususeq)
+        si.ses = cargo.bl.inf.SesBL.SesBL(self._metadata).crearSesion(conn, usu.ususeq)
 
         log.info("<----- Fin")
         return si

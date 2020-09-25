@@ -5,13 +5,11 @@ import logging
 
 from sqlalchemy import and_, join, select
 
+import cargo.bl.inf.nsu
+import cargo.bl.inf.usu
 import cargo.default as defaults
 
 from cargo.bl.basedal import BaseBL, Entity, IllegalStateException
-from cargo.bl.inf.NsuBL import NsuBL
-from cargo.bl.inf.NusBL import NusBL
-from cargo.bl.inf.UsuBL import UsuBL
-
 
 log = logging.getLogger(__name__)
 
@@ -39,7 +37,7 @@ class SusBL(BaseBL):
         log.info(f"     (ususeq): {ususeq}")
 
 
-        result = None
+        result = []
         """
         r01BL = R01BL(self._metadata)
         join = r01BL.t.join(self.t, r01BL.c.r01susseq == self.c.susseq)
@@ -70,8 +68,8 @@ class SusBL(BaseBL):
 
 
         result = self.insert(conn, sus)
-        NsuBL(self._metadata).registrarCambioDeEstado(conn, sus, usu, fecha)
-        UsuBL(self._metadata).activarSuscripcion(conn, usu, sus, fecha)
+        cargo.bl.inf.NsuBL.NsuBL(self._metadata).registrarCambioDeEstado(conn, sus, usu, fecha)
+        cargo.bl.inf.UsuBL.UsuBL(self._metadata).activarSuscripcion(conn, usu, sus, fecha)
 
         log.info(f"<----- Fin ({sus.susseq})")
         return result

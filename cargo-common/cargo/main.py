@@ -8,9 +8,9 @@ from sqlalchemy import create_engine, MetaData, Table
 
 import cargo.default as default
 
-from cargo.bl.inf.SesBL import SesBL
-from cargo.bl.inf.SusBL import SusBL
-from cargo.bl.inf.UsuBL import UsuBL
+import cargo.bl.inf.ses
+import cargo.bl.inf.sus
+import cargo.bl.inf.usu
 
 logging.basicConfig(level=logging.DEBUG, format=default.LOG_FORMAT)
 log = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ if __name__ == "__main__":
     metadata = MetaData(bind=engine)
     connection = engine.connect()
 
-    usuBL = UsuBL(metadata)
+    usuBL = cargo.bl.inf.usu.UsuBL(metadata)
     row = usuBL.read(connection, 1)
     row = usuBL.read(connection, 2)
 
@@ -38,8 +38,10 @@ if __name__ == "__main__":
     usuBL.update(connection, usu)
     usuBL.delete(connection, usu.ususeq)
 
+    """
     sessionInfo = usuBL.login(connection, " admin01 ", "0lAmUe9MgNi3")
     sessionInfo = usuBL.login(connection, " admin01 ", "0lAmUe9MgNi3")
+    """
 
     """
     result = SesBL(metadata).comprobarSesion(connection, sessionInfo.ses.sescod, 1)
@@ -47,6 +49,7 @@ if __name__ == "__main__":
     result = SesBL(metadata).comprobarSesion(connection, sessionInfo.ses.sescod, 1)
     """
 
+    """
     tx = connection.begin()
 
     susBL = SusBL(metadata)
@@ -62,6 +65,7 @@ if __name__ == "__main__":
     susBL.crearSuscripcion(connection, sus, usu, ahora)
 
     tx.commit()
-
+    """
+    
     connection.close()
     log.info("<----- Fin")

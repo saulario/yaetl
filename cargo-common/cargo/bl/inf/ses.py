@@ -7,10 +7,10 @@ import uuid
 
 from sqlalchemy import and_, select
 
+import cargo.bl.inf.sus
 
 from cargo import default
 from cargo.bl.basedal import BaseBL
-from cargo.bl.inf.SusBL import SusBL
 
 log = logging.getLogger(__name__)
 
@@ -88,7 +88,7 @@ class SesBL(BaseBL):
             log.info("<----- Salida, sesion caducada")
             return retval
 
-        suss = SusBL(self._metadata).getSuscripcionesActivas(conn, ses.sesususeq)
+        suss = cargo.bl.info.sus.SusBL(self._metadata).getSuscripcionesActivas(conn, ses.sesususeq)
         sus = [ sus for sus in suss if sus.susseq == susseq ]
         if not len(sus):
             log.info("<----- Salida, suscripcion no valida")
