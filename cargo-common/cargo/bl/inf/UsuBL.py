@@ -22,7 +22,7 @@ class UsuBL(BaseBL):
         super().__init__(metadata, "usu")
 
 
-    def activarSuscripcion(self, conn, usu, sus, fecha, upi=None):
+    def activarSuscripcion(self, conn, usu, sus, fecha):
         """
         Activar una suscripción para un usuario tiene las siguientes implicaciones
         """
@@ -38,7 +38,7 @@ class UsuBL(BaseBL):
         uss.usssusseq = sus.susseq
         uss.ussmod = sus.susmod
         uss.ussdef = 0
-        ussBL._activarSuscripcion(conn, uss, fecha, upi)
+        ussBL._activarSuscripcion(conn, uss, fecha)
 
         log.info("<----- Fin")
 

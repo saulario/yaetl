@@ -17,16 +17,16 @@ class UssBL(BaseBL):
         super().__init__(metadata, "uss", "usscod")
 
 
-    def _before_insert(self, conn, uss, upi):
+    def _before_insert(self, conn, uss, **kwargs):
         log.debug("-----> Inicio")
         uss.usscod = uuid.uuid4()
         log.debug("<----- Fin")        
 
 
-    def _activarSuscripcion(self, conn, uss, fecha, upi=None):
+    def _activarSuscripcion(self, conn, uss, fecha):
         log.debug("-----> Inicio")
 
-        self.insert(conn, uss, upi)
-        NusBL(self._metadata).registrarCambioDeEstado(conn, uss, fecha, upi)
+        self.insert(conn, uss)
+        NusBL(self._metadata).registrarCambioDeEstado(conn, uss, fecha)
 
         log.debug("<----- Fin")

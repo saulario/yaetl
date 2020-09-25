@@ -13,13 +13,14 @@ class NusBL(BaseBL):
     def __init__(self, metadata):
         super().__init__(metadata, "nus", "nuscod")
 
-    def _before_insert(self, conn, entity, upi):
+
+    def _before_insert(self, conn, entity, **kwargs):
         log.debug("-----> Inicio")
         entity.nuscod = uuid.uuid4()
         log.debug("<----- Fin")   
 
 
-    def _anularEstadosAnteriores(self, conn, uss, fecha, upi=None):
+    def _anularEstadosAnteriores(self, conn, uss, fecha):
         log.debug("-----> Inicio")
 
         stmt = self.t.update(None).values(nusfecfin=fecha).where(and_(
@@ -32,15 +33,15 @@ class NusBL(BaseBL):
         log.debug("<----- Fin")
 
 
-    def registrarCambioDeEstado(self, conn, uss, fecha, upi=None):
+    def registrarCambioDeEstado(self, conn, uss, fecha):
         log.info("-----> Inicio")
 
-        self._anularEstadosAnteriores(conn, uss, fecha, upi)
+        self._anularEstadosAnteriores(conn, uss, fecha)
         nus = self.getEntity()
         nus.nusususeq = uss.ussususeq
         nus.nussusseq = uss.usssusseq
         nus.nusfecini = fecha
         nus.nusmod = uss.ussmod
-        self.insert(conn, nus, upi)
+        self.insert(conn, nus)
 
         log.info("<----- Fin")

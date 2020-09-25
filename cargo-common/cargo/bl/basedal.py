@@ -93,10 +93,6 @@ class BaseDAL():
         return self._t.select()
 
 
-    def getTable(self):
-        return self._t
-
-
     @property
     def c(self):
         return self._t.c
@@ -135,54 +131,53 @@ class BaseBL(BaseDAL):
         super().__init__(metadata, nombre, pk, schema)
 
 
-    def _after_read(self, conn, entity, upi):
+    def _after_read(self, conn, entity, **kwargs):
         pass
 
-    def read(self, conn, id, upi=None):
+    def read(self, conn, id, **kwargs):
         entity = self._read(conn, id)
-        self._after_read(conn, entity, upi)
+        self._after_read(conn, entity, **kwargs)
         return entity
 
 
-    def _before_insert(self, conn, entity, upi):
+    def _before_insert(self, conn, entity, **kwargs):
         pass
 
-    def _after_insert(self, conn, entity, upi):
+    def _after_insert(self, conn, entity, **kwargs):
         pass
 
-    def insert(self, conn, entity, upi=None):
-        self._before_insert(conn, entity, upi)
+    def insert(self, conn, entity, **kwargs):
+        self._before_insert(conn, entity, **kwargs)
         result = self._insert(conn, entity)
-        self._after_insert(conn, entity, upi)
+        self._after_insert(conn, entity, **kwargs)
         return result
 
 
-    def _before_update(self, conn, entity, upi):
+    def _before_update(self, conn, entity, **kwargs):
         pass
 
-    def _after_update(self, conn, entity, upi):
+    def _after_update(self, conn, entity, **kwargs):
         pass
 
-    def update(self, conn, entity, upi=None):
-        self._before_update(conn, entity, upi)
+    def update(self, conn, entity, **kwargs):
+        self._before_update(conn, entity, **kwargs)
         retval = self._update(conn, entity)
-        self._after_update(conn, entity, upi)
+        self._after_update(conn, entity, **kwargs)
         return retval
 
 
-    def _before_delete(self, conn, entity, upi):
+    def _before_delete(self, conn, entity, **kwargs):
         pass
 
-    def _after_delete(self, conn, entity, upi):
+    def _after_delete(self, conn, entity, **kwargs):
         pass
 
-    def delete(self, conn, id, upi=None):
-        self._before_delete(conn, id, upi)
+    def delete(self, conn, id, **kwargs):
+        self._before_delete(conn, id, **kwargs)
         retval = self._delete(conn, id)
-        self._after_delete(conn, id, upi)
+        self._after_delete(conn, id, **kwargs)
         return retval
 
 
     def select(self):
-        return self.getTable().select()
-
+        return self.t.select()

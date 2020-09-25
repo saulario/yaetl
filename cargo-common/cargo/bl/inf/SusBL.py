@@ -22,11 +22,11 @@ class SusBL(BaseBL):
         super().__init__(metadata, "sus")
 
 
-    def _before_insert(self, conn, sus, upi=None):
+    def _before_insert(self, conn, sus, **kwargs):
         self._validarFormato(sus)
 
 
-    def _before_update(self, conn, sus, upi=None):
+    def _before_update(self, conn, sus, **kwargs):
         self._validarFormato(sus)
 
     
@@ -38,6 +38,9 @@ class SusBL(BaseBL):
         log.info("-----> Inicio")
         log.info(f"     (ususeq): {ususeq}")
 
+
+        result = None
+        """
         r01BL = R01BL(self._metadata)
         join = r01BL.t.join(self.t, r01BL.c.r01susseq == self.c.susseq)
         stmt = select([self.t]).select_from(join).where(and_(
@@ -46,12 +49,13 @@ class SusBL(BaseBL):
                 self.c.susact == 1
             ))
         result = [ Entity.fromProxy(x) for x in conn.execute(stmt).fetchall() ]
+        """
 
         log.info(f"<----- Fin ({len(result)})")
         return result
 
     
-    def crearSuscripcion(self, conn, sus, usu, fecha, upi=None):
+    def crearSuscripcion(self, conn, sus, usu, fecha):
         """
         Crear una suscripción tiene las siguientes implicaciones
             · El usuario necesariamente debe existir
@@ -65,9 +69,9 @@ class SusBL(BaseBL):
         log.info(f"     (fecha) : {fecha}")
 
 
-        result = self.insert(conn, sus, upi)
-        NsuBL(self._metadata).registrarCambioDeEstado(conn, sus, usu, fecha, upi)
-        UsuBL(self._metadata).activarSuscripcion(conn, usu, sus, fecha, upi)
+        result = self.insert(conn, sus)
+        NsuBL(self._metadata).registrarCambioDeEstado(conn, sus, usu, fecha)
+        UsuBL(self._metadata).activarSuscripcion(conn, usu, sus, fecha)
 
         log.info(f"<----- Fin ({sus.susseq})")
         return result

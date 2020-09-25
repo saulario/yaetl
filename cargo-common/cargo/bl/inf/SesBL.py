@@ -10,7 +10,6 @@ from sqlalchemy import and_, select
 
 from cargo import default
 from cargo.bl.basedal import BaseBL
-from cargo.bl.inf.R01BL import R01BL
 from cargo.bl.inf.SusBL import SusBL
 
 log = logging.getLogger(__name__)
@@ -21,7 +20,7 @@ class SesBL(BaseBL):
         super().__init__(metadata, "ses", "sescod")
 
 
-    def _before_insert(self, conn, entity, upi):
+    def _before_insert(self, conn, entity, **kwargs):
         log.debug("-----> Inicio")
         entity.sescod = uuid.uuid4()
         log.debug("<----- Fin")
