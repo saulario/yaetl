@@ -52,23 +52,25 @@ class SesBL(BaseBL):
         log.debug("<----- Fin")
 
 
-    def crearSesion(self, conn, ususeq):
+    def crearSesion(self, conn, ususeq, susseq):
         log.info("-----> Inicio")
         log.info(f"     (ususeq): {ususeq}")
+        log.info(f"     (susseq): {susseq}")
 
         ahora = dt.datetime.utcnow()
         self._invalidarSesionesDeUsuario(conn, ususeq, ahora)
 
-        entity = self.getEntity()
-        entity.sesususeq = ususeq
-        entity.sesact = 1
-        entity.sescre = entity.sesult = ahora
-        entity.sesval = entity.sescre + default.SESSION_DURATION
-        entity.seshit = 0
-        self.insert(conn, entity)
+        ses = self.getEntity()
+        ses.sesususeq = ususeq
+        ses.sessusseq = susseq
+        ses.sesact = 1
+        ses.sescre = ses.sesult = ahora
+        ses.sesval = ses.sescre + default.SESSION_DURATION
+        ses.seshit = 0
+        self.insert(conn, ses)
         
         log.info("<----- Fin")
-        return entity
+        return ses
 
     
     def comprobarSesion(self, conn, sescod, susseq):

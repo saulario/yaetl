@@ -40,9 +40,9 @@ create table usu (
 );
 
 insert into usu ( usuver, usuact, usuaka, usunom, usupwd, usueml)
-    values(0, 1, 'ADMIN01', 'ADMINISTRADOR 01', '0lAmUe9MgNi3', 'admin01@nomail.com');
-insert into usu ( usuver, usuact, usuaka, usunom, usupwd, usueml)
     values(0, 1, 'ADMIN02', 'ADMINISTRADOR 02', '7Q3Hbin1WrdT', 'admin02@nomail.com');
+insert into usu ( usuver, usuact, usuaka, usunom, usupwd, usueml)
+    values(0, 1, 'ADMIN01', 'ADMINISTRADOR 01', '0lAmUe9MgNi3', 'admin01@nomail.com');
 
 
 create table uss (
@@ -58,16 +58,17 @@ create table uss (
     constraint fk_uss_sus foreign key (usssusseq) references sus(susseq)
 );
 
-insert into uss
-    values(newid(), 1,
-        (select ususeq from usu where usuaka = 'ADMIN01'),
-        (select susseq from sus where susaka = 'TRANSPORTE'),
-        128, 1);
+
 insert into uss
     values(newid(), 1,
         (select ususeq from usu where usuaka = 'ADMIN02'),
         (select susseq from sus where susaka = 'LOGISTICA'),
         128, 1);        
+insert into uss
+    values(newid(), 1,
+        (select ususeq from usu where usuaka = 'ADMIN01'),
+        (select susseq from sus where susaka = 'TRANSPORTE'),
+        128, 1);
 
 
 create table ses (
@@ -75,12 +76,14 @@ create table ses (
     sesact smallint not null default 0,
 
     sesususeq bigint not null index ix_ses_sesususeq,
+    sessusseq bigint not null index ix_ses_sessusseq,
     sescre datetime2,                                                           -- creación
     sesult datetime2,                                                           -- última actualización
     sesval datetime2,                                                           -- validez
     seshit bigint not null default 0,                                           -- peticiones
 
-    constraint fk_ses_usu foreign key (sesususeq) references usu(ususeq)
+    constraint fk_ses_usu foreign key (sesususeq) references usu(ususeq),
+    constraint fk_ses_sus foreign key (sessusseq) references sus(susseq)
 );
 
 

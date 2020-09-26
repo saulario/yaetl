@@ -9,7 +9,7 @@ import cargo.bl.inf.ses
 import cargo.bl.inf.sus
 import cargo.bl.inf.uss
 
-from cargo.bl.basedal import BaseBL, Entity
+from cargo.bl.basedal import BaseBL, Entity, IllegalStateException
 
 log = logging.getLogger(__name__)
 
@@ -78,7 +78,10 @@ class UsuBL(BaseBL):
         si.usu = Entity.fromProxy(usu)
         si.usu.usupwd = "*" * 5
         si.uss = self.getSuscripcionesActivas(conn, usu.ususeq)
-        si.ses = cargo.bl.inf.ses.SesBL(self._metadata).crearSesion(conn, usu.ususeq)
+        uss = [ x for x in si.uss if x.ussdef == 1 ]
+        if uss is None:
+            raise IllegalStateException(message=f"Usuario {si.usu.ususeq} no tiene suscripción por defecto")
+        si.ses = cargo.bl.inf.ses.SesBL(self._metadata).crearSesion(conn, usu.ususeq, uss[0].usssusseq)
 
         log.info("<----- Fin")
         return si

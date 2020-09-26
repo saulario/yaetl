@@ -9,7 +9,7 @@ import cargo.bl.inf.nsu
 import cargo.bl.inf.usu
 import cargo.default as defaults
 
-from cargo.bl.basedal import BaseBL, Entity, IllegalStateException
+from cargo.bl.basedal import BaseBL, Entity
 
 log = logging.getLogger(__name__)
 
