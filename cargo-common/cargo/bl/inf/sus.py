@@ -32,27 +32,6 @@ class SusBL(BaseBL):
         sus.susmod &= defaults.MODULOS_MAXVALUE
 
 
-    def getSuscripcionesActivas(self, conn, ususeq):
-        log.info("-----> Inicio")
-        log.info(f"     (ususeq): {ususeq}")
-
-
-        result = []
-        """
-        r01BL = R01BL(self._metadata)
-        join = r01BL.t.join(self.t, r01BL.c.r01susseq == self.c.susseq)
-        stmt = select([self.t]).select_from(join).where(and_(
-                r01BL.c.r01ususeq == ususeq,
-                r01BL.c.r01act == 1,
-                self.c.susact == 1
-            ))
-        result = [ Entity.fromProxy(x) for x in conn.execute(stmt).fetchall() ]
-        """
-
-        log.info(f"<----- Fin ({len(result)})")
-        return result
-
-    
     def crearSuscripcion(self, conn, sus, usu, fecha):
         """
         Crear una suscripción tiene las siguientes implicaciones
@@ -68,8 +47,8 @@ class SusBL(BaseBL):
 
 
         result = self.insert(conn, sus)
-        cargo.bl.inf.NsuBL.NsuBL(self._metadata).registrarCambioDeEstado(conn, sus, usu, fecha)
-        cargo.bl.inf.UsuBL.UsuBL(self._metadata).activarSuscripcion(conn, usu, sus, fecha)
+        cargo.bl.inf.nsu.NsuBL(self._metadata).registrarCambioDeEstado(conn, sus, usu, fecha)
+        cargo.bl.inf.usu.UsuBL(self._metadata).activarSuscripcion(conn, usu, sus, fecha)
 
         log.info(f"<----- Fin ({sus.susseq})")
         return result

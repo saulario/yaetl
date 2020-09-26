@@ -27,6 +27,7 @@ if __name__ == "__main__":
     row = usuBL.read(connection, 1)
     row = usuBL.read(connection, 2)
 
+    """
     usu = usuBL.getEntity()
     usu.usuact = 1
     usu.usuaka = "12312"
@@ -37,11 +38,10 @@ if __name__ == "__main__":
     usu.usunom, usu.usueml = usu.usueml, usu.usunom
     usuBL.update(connection, usu)
     usuBL.delete(connection, usu.ususeq)
+    """
 
-    """
     sessionInfo = usuBL.login(connection, " admin01 ", "0lAmUe9MgNi3")
-    sessionInfo = usuBL.login(connection, " admin01 ", "0lAmUe9MgNi3")
-    """
+    sessionInfo = usuBL.login(connection, " admin02 ", "0lAmUe9MgNi3")
 
     """
     result = SesBL(metadata).comprobarSesion(connection, sessionInfo.ses.sescod, 1)

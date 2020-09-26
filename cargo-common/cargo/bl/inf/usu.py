@@ -5,9 +5,9 @@ import logging
 
 from sqlalchemy import and_, or_
 
-import cargo.bl.inf.SesBL
-import cargo.bl.inf.SusBL
-import cargo.bl.inf.UssBL
+import cargo.bl.inf.ses
+import cargo.bl.inf.sus
+import cargo.bl.inf.uss
 
 from cargo.bl.basedal import BaseBL, Entity
 
@@ -32,7 +32,7 @@ class UsuBL(BaseBL):
         log.info(f"     (susseq): {sus.susseq}")
         log.info(f"     (fecha) : {sus.susseq}")
 
-        ussBL = cargo.bl.inf.UssBL.UssBL(self._metadata)
+        ussBL = cargo.bl.inf.uss.UssBL(self._metadata)
         uss = ussBL.getEntity()
         uss.ussact = 1
         uss.ussususeq = usu.ususeq
@@ -42,6 +42,15 @@ class UsuBL(BaseBL):
         ussBL._activarSuscripcion(conn, uss, fecha)
 
         log.info("<----- Fin")
+
+
+    def getSuscripcionesActivas(self, conn, ususeq):
+        """
+        Recupera las suscripciones activas para el usuario. Tiene que
+        estar activa la asignación y la propia suscripción
+        """
+        return cargo.bl.inf.uss.UssBL(self._metadata).\
+                _getSuscripcionesActivas(conn, ususeq)
 
 
     def login(self, conn, user, password):
@@ -68,8 +77,8 @@ class UsuBL(BaseBL):
         si = SessionInfo()
         si.usu = Entity.fromProxy(usu)
         si.usu.usupwd = "*" * 5
-        si.suss = cargo.bl.inf.SusBL.SusBL(self._metadata).getSuscripcionesActivas(conn, usu.ususeq)
-        si.ses = cargo.bl.inf.SesBL.SesBL(self._metadata).crearSesion(conn, usu.ususeq)
+        si.uss = self.getSuscripcionesActivas(conn, usu.ususeq)
+        si.ses = cargo.bl.inf.ses.SesBL(self._metadata).crearSesion(conn, usu.ususeq)
 
         log.info("<----- Fin")
         return si
