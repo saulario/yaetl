@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+from enum import Enum
 from sqlalchemy import and_, MetaData, Table
 
 class Entity():
@@ -181,3 +182,54 @@ class BaseBL(BaseDAL):
 
     def select(self):
         return self.t.select()
+
+
+class Operator(Enum):
+    EQUALS = "eq"
+    GREATER = "gt"
+    GREATER_OR_EQUALS = "ge"
+    LOWER = "lt"
+    LOWER_OR_EQUALS = "le"
+    IN = "in"
+    BETWEEN = "bw"
+    STARTS_WITH = "sw"
+    ENDS_WITH = "ew"
+    LIKE = "lk"        
+
+
+class Filter:
+
+    def __init__(self, column, operator, value):
+        self.column = column
+        self.operator = operator
+        self.value = value
+
+class Query:
+
+    @classmethod
+    def compile(self, metadata, filters):
+        ff = []
+        for f in filters:
+            column = metadata.tables[f.column[0:3]].c[f.column]
+            if f.operator == Operator.EQUALS.value:
+                ff.append(column == f.value)
+            elif f.operator == Operator.GREATER.value:
+                ff.append(column > f.value)
+            elif f.operator == Operator.GREATER_OR_EQUALS.value:
+                ff.append(column >= f.value)
+            elif f.operator == Operator.LOWER.value:
+                ff.append(column < f.value)
+            elif f.operator == Operator.LOWER_OR_EQUALS.value:
+                ff.append(column <= f.value)                
+            elif f.operator == Operator.IN.value:
+                ff.append(column.in_(f.value.split(",")))                
+            elif f.operator == Operator.BETWEEN.value:
+                v = f.value.split(":")
+                ff.append(between(column, v[0], v[1]))
+            elif f.operator == Operator.STARTS_WITH.value:
+                ff.append(column.like(f.value + "%"))
+            elif f.operator == Operator.ENDS_WITH.value:
+                ff.append(column.like("%" + f.value))
+            elif f.operator == Operator.LIKE.value:
+                ff.append(column.like("%" + f.value + "%"))
+        return and_(*ff)
