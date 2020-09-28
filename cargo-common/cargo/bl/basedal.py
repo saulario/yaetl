@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from enum import Enum
-from sqlalchemy import and_, MetaData, Table
+from sqlalchemy import and_, MetaData, Table, between, false
 
 class Entity():
 
@@ -186,6 +186,7 @@ class BaseBL(BaseDAL):
 
 class Operator(Enum):
     EQUALS = "eq"
+    NOT_EQUALS = "ne"
     GREATER = "gt"
     GREATER_OR_EQUALS = "ge"
     LOWER = "lt"
@@ -208,11 +209,16 @@ class Query:
 
     @classmethod
     def compile(self, metadata, filters):
+        if len(filters) == 0:
+            return false()
+
         ff = []
         for f in filters:
             column = metadata.tables[f.column[0:3]].c[f.column]
             if f.operator == Operator.EQUALS.value:
                 ff.append(column == f.value)
+            elif f.operator == Operator.NOT_EQUALS.value:
+                ff.append(column != f.value)
             elif f.operator == Operator.GREATER.value:
                 ff.append(column > f.value)
             elif f.operator == Operator.GREATER_OR_EQUALS.value:
