@@ -12,6 +12,9 @@ class Context():
         self.ibcore_metadata = sqlalchemy.MetaData(bind=self.ib_engine, schema="PRE_PLUSCORE")
         self.ibsite_metadata = sqlalchemy.MetaData(bind=self.ib_engine)
 
+        self.mtbm_engine = sqlalchemy.create_engine(cp.get("DATASOURCES", "mtb_messages"))
+        self.mtbm_metadata = sqlalchemy.MetaData(bind=self.mtbm_engine, schema="MTB_MESSAGES")
+
         self.mtbp_engine = sqlalchemy.create_engine(cp.get("DATASOURCES", "mtb_process"))
         self.mtbp_metadata = sqlalchemy.MetaData(bind=self.mtbp_engine, schema="MTB_PROCESS")
 
