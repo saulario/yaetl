@@ -3,6 +3,7 @@ import sqlalchemy
 import logging
 
 import context
+import model
 
 log = logging.getLogger(__name__)
 
@@ -69,7 +70,7 @@ group by
 """)    
     rows = ctx.mtbm_engine.execute(stmt, fromDate=ctx.fromDate).fetchall()
     for row in rows:
-        entity = context.Entity(row)
+        entity = model.Entity(row)
         if entity.albaranes != 1:
             entity.peso = None
             entity.volume = None
@@ -78,15 +79,18 @@ group by
         stmt = cf_mtb_desadv.insert(None).values(d)
         cf_conn.execute(stmt)
 
-    log.info("\t\tProcesando vda4945 LGI/Schaeffer")
+    """
+    En el caso de LGI documento es número de discovery y shipmentid es a la vez albarán y SLB
+    """
+    log.info("\t\tProcesando vda4945 LGI")
     stmt =  sqlalchemy.sql.text(f"""select 
     37084 as cliente
     , ts.interchangesenderid as emisor
     , ts.interchangerecipientid as receptor
-    , ts.bordero as documento
+    , ST.PACKAGINGTRANSPORORDER as documento                -- DISCOVERY
     , 'VDA4945-VACIOS' as tipo_documento
     , ts.dateofpreparation as fecha_documento
-    , st.shipmentid as albaran
+    , st.shipmentid as albaran                              -- SLB
     , ts.dateofpreparation as fecha_recogida_solicitada
     , st.shipfromcode as alias_origen
     , st.estimatedtimeofarrival fecha_entrega_solicitada
@@ -102,7 +106,7 @@ group by
     37084
     , ts.interchangesenderid
     , ts.interchangerecipientid
-    , ts.bordero
+    , ST.PACKAGINGTRANSPORORDER
     , 'VDA4945-VACIOS'
     , ts.dateofpreparation
     , st.shipmentid

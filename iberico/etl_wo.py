@@ -29,6 +29,7 @@ def procesar_pedidos(ctx):
     , ped.detalle_cliente as puerta
     , ped.peso_bruto as peso, ped.volumen as volumen, peso_neto as peso_facturable
     , p.observaciones as albaranes
+    , p.dim_cliente_7 as tarifa
 from pedidos p
     join pedidos_etapas_detalle ped on ped.ide=p.ide and ped.pedido=p.id
 where
@@ -39,8 +40,12 @@ AND P.CLIENTE = '37084'
 and p.estado <> '8'
 """)
 
+    fila = 0
     rows = wo_conn.execute(stmt, fromDate=ctx.fromDate).fetchall()
     for row in rows:
+        fila += 1
+        if not (fila % 100):
+            log.info(f"\tprocesando ... {fila}")        
         stmt = cf_wo_pedidos.insert(None).values(row)
         cf_conn.execute(stmt)
 
