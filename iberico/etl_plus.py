@@ -18,7 +18,8 @@ def procesar_site(ctx, id):
 
     cf_plus_albaranes = sqlalchemy.Table("plus_albaranes", ctx.cf_metadata, autoload=True)
 
-    stmt =  sqlalchemy.sql.text(f"""select S.ID AS SITE, dnp.deliverynoteorigin as albaran, pua.consignmentreferencenumber AS discovery, dnp.slborigin as slb
+    stmt =  sqlalchemy.sql.text(f"""select S.ID AS SITE, dn.id as dnid
+    , dnp.deliverynoteorigin as albaran, pua.consignmentreferencenumber AS discovery, dnp.slborigin as slb
     , dn.truck, dn.trailer, dnp.bordero as bordero1, dnp.bordero2
     , cast(dn.receptiondate AS DATE) as FECHA_RECOGIDA
     , CAST(DNP.deliverydate as date) AS FECHA_ENTREGA
@@ -43,7 +44,8 @@ where
     (lyo.farezoneid = 370 or lyd.farezoneid = 370)
     and cast(dn.receptiondate as date) >= :fromDate
 group by 
-    S.ID, dnp.deliverynoteorigin, pua.consignmentreferencenumber, dnp.slborigin
+    S.ID, dn.id
+    , dnp.deliverynoteorigin, pua.consignmentreferencenumber, dnp.slborigin
     , dn.truck, dn.trailer, dnp.bordero, dnp.bordero2
     , cast(dn.receptiondate AS DATE), (extract(year from dn.receptiondate) * 100 + extract(month from dn.receptiondate))
     , CAST(DNP.deliverydate as date), (extract(year from dnp.deliverydate) * 100 + extract(month from dnp.deliverydate))

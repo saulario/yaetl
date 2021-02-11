@@ -5,11 +5,11 @@ import os
 
 import sqlalchemy, sqlalchemy.sql
 
-import context
-import etl_mtb
-import etl_plus
-import etl_wo
-import model
+import iberico.context
+import iberico.etl_mtb
+import iberico.etl_plus
+import iberico.etl_wo
+import iberico.model
 
 from sqlalchemy import and_
 
@@ -211,7 +211,7 @@ def aplicar_cambios(ctx):
         if not (fila % 100):
             log.info(f"\tprocesando ... {fila}")
 
-        albaran = model.PlusAlbaran(row)
+        albaran = iberico.model.PlusAlbaran(row)
         albaran.cliente = 37084
         albaran.flujo = "VG" if albaran.zt_destino == 370 else "LG"
         asignar_centro_coste(ctx, albaran)
@@ -252,16 +252,15 @@ if __name__ == "__main__":
     cp = configparser.ConfigParser()
     cp.read(os.path.expanduser("~") + "/etc/config.ini")
 
-    ctx = context.Context(cp)
+    ctx = iberico.context.Context(cp)
     ctx.fromDate = dt.date(2020, 11, 1)
 
     actualizar = False
     if actualizar:
-        etl_wo.run(ctx)
+        iberico.etl_wo.run(ctx)
         etl_mtb.run(ctx)
-        etl_plus.run(ctx)
+        iberico.etl_plus.run(ctx)
 
-    etl_wo.run(ctx)
     cruzar_datos(ctx)
 
     log.info("<----- Fin")
