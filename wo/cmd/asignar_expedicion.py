@@ -39,7 +39,7 @@ if __name__ == "__main__":
             pedidos_map[pedido.fuente] = []
         pedidos_map[pedido.fuente].append(pedido)
 
-    update = False
+    update = True
     for key in pedidos_map.keys():
         for row in pedidos_map[key]:
             pedido = wo.model.Pedidos(row)
@@ -48,6 +48,9 @@ if __name__ == "__main__":
 
             # solo procesamos Man y Porsche
             if not pedido.dim_cliente_1:
+                continue
+
+            if pedido.dim_cliente_1 != "37084":
                 continue
 
             a = None
