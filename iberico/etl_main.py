@@ -35,18 +35,13 @@ def cargar_maps(ctx):
     stmt = cf_wo_pedidos.select().where(and_(
         cf_wo_pedidos.c.fecha_recogida >= ctx.fromDate,
         cf_wo_pedidos.c.cliente == 37084))
-    rows = ctx.cf_engine.execute(stmt).fetchall()
-    for pedido in rows:
-        if not pedido.slb:
-            continue
-        slb = None
-        try:
-            slb = int(pedido.slb)
-        except ValueError:
-            continue
-        if slb not in ctx.ped_map:
-            ctx.ped_map[slb] = []
-        ctx.ped_map[slb].append(pedido)
+    pedidos = ctx.cf_engine.execute(stmt).fetchall()
+    for pedido in pedidos:
+        for albaran in [ x.strip() for x in pedido.albaranes.split(",") ]:
+            if albaran not in ctx.ped_map:
+                ctx.ped_map[albaran] = []
+            ctx.ped_map[albaran].append(pedido)
+    print(True)
 
 
 def asignar_centro_coste(ctx, albaran):
@@ -163,13 +158,6 @@ def asignar_desadv(ctx, albaran):
         asignar_desadv_vacios(ctx, albaran)
 
 def asignar_pedido(ctx, albaran):
-    slb = None
-    try:
-        slb = int(albaran.slb)
-    except ValueError:
-        return
-    if slb not in ctx.ped_map:
-        return
 
     albaran.pedido_wo = None
     albaran.expedicion_wo = None
@@ -177,6 +165,30 @@ def asignar_pedido(ctx, albaran):
     albaran.peso = None
     albaran.volumen = None
     albaran.peso_facturable = None
+
+    for pedido in ctx.ped_map.get(albaran.albaran) or []:
+        if pedido.flujo != albaran.flujo:
+            continue
+        if pedido.alias_origen != albaran.alias_origen:
+            continue
+        if pedido.alias_destino != albaran.alias_destino:
+            continue
+        """
+        puerta = albaran.puerta_destino if albaran.flujo == "VG" else albaran.puerta_origen
+        if pedido.puerta != puerta:
+            continue
+        """
+        albaran.pedido_wo = pedido.pedido
+        albaran.expedicion_wo = pedido.expedicion
+        albaran.importe_wo = pedido.importe_total
+        # esto hay que cogerlo con pinzas
+        if pedido.tarifa:
+            albaran.peso = pedido.peso
+            albaran.volumen = pedido.volumen
+            albaran.peso_facturable = pedido.peso_facturable
+        break
+
+    """
     for pedido in ctx.ped_map[slb]:
         if pedido.flujo != albaran.flujo:
             continue
@@ -195,7 +207,7 @@ def asignar_pedido(ctx, albaran):
             albaran.peso = pedido.peso
             albaran.volumen = pedido.volumen
             albaran.peso_facturable = pedido.peso_facturable
-
+    """
 
 def aplicar_cambios(ctx):
     cf_conn = ctx.cf_engine.connect()
@@ -215,7 +227,7 @@ def aplicar_cambios(ctx):
         albaran.cliente = 37084
         albaran.flujo = "VG" if albaran.zt_destino == 370 else "LG"
         asignar_centro_coste(ctx, albaran)
-        asignar_desadv(ctx, albaran)
+        #asignar_desadv(ctx, albaran)
         asignar_pedido(ctx, albaran)
 
         if albaran.fecha_recogida:
@@ -253,12 +265,12 @@ if __name__ == "__main__":
     cp.read(os.path.expanduser("~") + "/etc/config.ini")
 
     ctx = iberico.context.Context(cp)
-    ctx.fromDate = dt.date(2020, 11, 1)
+    ctx.fromDate = dt.date(2021, 1, 1)
 
-    actualizar = False
+    actualizar = True
     if actualizar:
-        iberico.etl_wo.run(ctx)
-        etl_mtb.run(ctx)
+        #iberico.etl_wo.run(ctx)
+        #iberico.etl_mtb.run(ctx)
         iberico.etl_plus.run(ctx)
 
     cruzar_datos(ctx)

@@ -50,8 +50,10 @@ if __name__ == "__main__":
             if not pedido.dim_cliente_1:
                 continue
 
+            """
             if pedido.dim_cliente_1 != "37084":
                 continue
+            """
 
             a = None
             for a in (x for x in pedidos_map[key] if x.exp_id): break
@@ -103,6 +105,6 @@ if __name__ == "__main__":
                     tx.commit()
 
 
-    print("Fin")
+    log.info("<----- Fin")
 
 

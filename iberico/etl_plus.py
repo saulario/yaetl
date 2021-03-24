@@ -54,8 +54,12 @@ group by
     , ACD.ALIAS, ACD.NAME, NVL(LYD.NAME, ' '), NVL(LYD.FAREZONEID, 0)
     , dnp.loadlistid""")
 
+    fila = 0
     rows = ctx.ib_engine.execute(stmt, fromDate=ctx.fromDate).fetchall()
     for row in rows:
+        fila += 1
+        if not (fila % 100):
+            log.info(f"\tprocesando ... {fila}")        
         stmt = cf_plus_albaranes.insert(None).values(row)
         cf_conn.execute(stmt)
 
