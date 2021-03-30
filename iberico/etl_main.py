@@ -37,7 +37,7 @@ def cargar_maps(ctx):
         cf_wo_pedidos.c.cliente == 37084))
     pedidos = ctx.cf_engine.execute(stmt).fetchall()
     for pedido in pedidos:
-        for albaran in [ x.strip() for x in pedido.albaranes.split(",") ]:
+        for albaran in [ x.strip() for x in (pedido.albaranes or "").split(",") ]:
             if albaran not in ctx.ped_map:
                 ctx.ped_map[albaran] = []
             ctx.ped_map[albaran].append(pedido)
