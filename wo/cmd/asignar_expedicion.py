@@ -70,18 +70,22 @@ if __name__ == "__main__":
             with ctx.wo_engine.connect() as conn:
                 with conn.begin() as tx:
 
+                    epos = conn.execute(expediciones_pe_ot.select().where(and_(
+                        expediciones_pe_ot.c.ide == a.ide,
+                        expediciones_pe_ot.c.expedicion == a.exp_id,
+                        expediciones_pe_ot.c.ot != 0
+                    ))).fetchall()
+
+                    if not len(epos):
+                        log.info(f"\t\tIgnorando expedición sin OTs")
+                        continue
+
                     el = wo.model.ExpedicionesLineas()
                     el.ide = pedido.ide
                     el.expedicion = a.exp_id
                     el.tipo = "P"
                     el.codigo = pedido.id
                     conn.execute(expediciones_lineas.insert(None).values(el.__dict__))
-
-                    epos = conn.execute(expediciones_pe_ot.select().where(and_(
-                        expediciones_pe_ot.c.ide == a.ide,
-                        expediciones_pe_ot.c.expedicion == a.exp_id,
-                        expediciones_pe_ot.c.ot != 0
-                    ))).fetchall()
 
                     ots = dict.fromkeys([ epo.ot for epo in epos ]).keys()
                     if not ots:

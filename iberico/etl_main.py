@@ -263,7 +263,6 @@ if __name__ == "__main__":
 
     cp = configparser.ConfigParser()
     cp.read(os.path.expanduser("~") + "/etc/config.ini")
-
     ctx = iberico.context.Context(cp)
     ctx.fromDate = dt.date(2021, 1, 1)
 
