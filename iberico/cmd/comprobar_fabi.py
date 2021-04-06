@@ -38,7 +38,41 @@ def procesar_vollgut(ctx, wb):
                 and x[46].value == pais 
                 and x[45].value == plz]
         documentos = list(dict.fromkeys(documentos))
-        print(documentos)
+        for doc in documentos:
+            match = albaran_re.match(doc)
+            if not match:
+                continue
+            albaran = f"%{match.group('albaran')}%" 
+            dias = dt.timedelta(days=8)
+            fd = fecha - dias
+            td = fecha + dias
+
+            stmt = wo_pedidos_t.select().where(and_(
+                wo_pedidos_t.c.albaranes.like(albaran),
+                between(wo_pedidos_t.c.fecha_recogida, fd, td),
+                wo_pedidos_t.c.cliente == 37084
+            ))
+
+            rows = ctx.cf_engine.execute(stmt).fetchall()
+            if not len(rows):
+                log.info(f"\t\tNo se ha encontrado pedido asociado para el albarán. {albaran}")
+                continue
+            if len(rows) > 1:
+                log.info(f"\t\tSe han encontrado varios pedidos {[ x.pedido for x in rows ]}")
+                continue
+
+            pedido = rows[0]
+            importe = fila[15].value + fila[18].value
+            pf = fila[12].value
+            campos = { 
+                'importe_cliente' : round(importe, 2),
+                'peso_facturable_cliente' : round(pf, 2),
+            }
+
+            stmt = wo_pedidos_t.update(None).values(campos).where(wo_pedidos_t.c.Id == pedido.Id)
+            ctx.cf_engine.execute(stmt)
+            break
+
 
     log.info("<----- Fin")
 
@@ -73,7 +107,7 @@ def procesar_leergut(ctx, wb):
 
         rows = ctx.cf_engine.execute(stmt).fetchall()
         if not len(rows):
-            log.info(f"\t\tNo se ha encontrado pedido asociado....")
+            log.info(f"\t\tNo se ha encontrado pedido asociado para el albarán. {albaran}")
             continue
         if len(rows) > 1:
             log.info(f"\t\tSe han encontrado varios pedidos {[ x.pedido for x in rows ]}")
@@ -95,7 +129,7 @@ def procesar_leergut(ctx, wb):
 
 def main(ctx, wb):
     procesar_vollgut(ctx, wb)
-    #procesar_leergut(ctx, wb)
+    procesar_leergut(ctx, wb)
 
 
 if __name__ == "__main__":

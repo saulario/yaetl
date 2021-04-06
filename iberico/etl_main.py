@@ -30,7 +30,10 @@ def cargar_maps(ctx):
             ctx.alb_map[row.albaran]  = []
         ctx.alb_map[row.albaran].append(row)
 
+    # hay que hacer 2 maps porque hay pedidos en los que no caben toda la lista de
+    # albaranes y hay que asumir que están en la ruta
     ctx.ped_map = {}
+    ctx.ped_fuente = {}
     cf_wo_pedidos = sqlalchemy.Table("wo_pedidos", ctx.cf_metadata, autoload=True)
     stmt = cf_wo_pedidos.select().where(and_(
         cf_wo_pedidos.c.fecha_recogida >= ctx.fromDate,
@@ -41,8 +44,9 @@ def cargar_maps(ctx):
             if albaran not in ctx.ped_map:
                 ctx.ped_map[albaran] = []
             ctx.ped_map[albaran].append(pedido)
-    print(True)
-
+            if pedido.fuente not in ctx.ped_fuente:
+                ctx.ped_fuente[pedido.fuente] = []
+            ctx.ped_fuente[pedido.fuente].append(pedido)
 
 def asignar_centro_coste(ctx, albaran):
     """
@@ -159,6 +163,9 @@ def asignar_desadv(ctx, albaran):
 
 def asignar_pedido(ctx, albaran):
 
+    if albaran.pedido_wo:
+        return
+
     albaran.pedido_wo = None
     albaran.expedicion_wo = None
     albaran.importe_wo = None
@@ -172,43 +179,35 @@ def asignar_pedido(ctx, albaran):
         if (pedido.alias_origen != albaran.alias_origen and
             pedido.alias_destino != albaran.alias_destino):
             continue
-        """
-        puerta = albaran.puerta_destino if albaran.flujo == "VG" else albaran.puerta_origen
-        if pedido.puerta != puerta:
-            continue
-        """
         albaran.pedido_wo = pedido.pedido
         albaran.expedicion_wo = pedido.expedicion
         albaran.importe_wo = pedido.importe_total
         # esto no se puede porque no tenemos los datos a nivel de albaran
-        """
-        if pedido.tarifa:
-            albaran.peso = pedido.peso
-            albaran.volumen = pedido.volumen
-            albaran.peso_facturable = pedido.peso_facturable
-        """
         break
+    if albaran.pedido_wo:
+        return
 
-    """
-    for pedido in ctx.ped_map[slb]:
+    # si no se han encontrado por albarán hay que buscar en la HR/EX más probable
+    directo = (albaran.bordero1 == albaran.bordero2)
+
+    if albaran.flujo == "VG":
+        fuente = f"PLUS_EX_{albaran.expedicion}" if not directo else f"PLUS_HR_{albaran.hoja_ruta}"
+    else:
+        fuente = f"PLUS_HR_{albaran.hoja_ruta}" if not directo else f"PLUS_EX_{albaran.expedicion}"
+
+    pedidos = ctx.ped_fuente.get(fuente) or []
+    for pedido in pedidos:
         if pedido.flujo != albaran.flujo:
             continue
-        if pedido.alias_origen != albaran.alias_origen:
-            continue
-        if pedido.alias_destino != albaran.alias_destino:
-            continue
-        puerta = albaran.puerta_destino if albaran.flujo == "VG" else albaran.puerta_origen
-        if pedido.puerta != puerta:
+        if (pedido.alias_origen != albaran.alias_origen and
+            pedido.alias_destino != albaran.alias_destino):
             continue
         albaran.pedido_wo = pedido.pedido
         albaran.expedicion_wo = pedido.expedicion
         albaran.importe_wo = pedido.importe_total
-        # esto hay que cogerlo con pinzas
-        if pedido.tarifa:
-            albaran.peso = pedido.peso
-            albaran.volumen = pedido.volumen
-            albaran.peso_facturable = pedido.peso_facturable
-    """
+        break
+    if albaran.pedido_wo:
+        return
 
 def aplicar_cambios(ctx):
     cf_conn = ctx.cf_engine.connect()
@@ -265,7 +264,7 @@ if __name__ == "__main__":
     cp = configparser.ConfigParser()
     cp.read(os.path.expanduser("~") + "/etc/config.ini")
     ctx = iberico.context.Context(cp)
-    ctx.fromDate = dt.date(2021, 1, 1)
+    ctx.fromDate = dt.date(2020, 6, 1)
 
     actualizar = False
     if actualizar:

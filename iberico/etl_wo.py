@@ -48,8 +48,16 @@ select p.ide, p.id as pedido, p.exp_id as expedicion, p.cliente, p.estado, p.fac
         when p.subtipo = 1 then 'VG'
         else 'LG'
       end as flujo
-    , cast(p.pet_org_fecha as date) fecha_recogida, p.dir_org_alias alias_origen
-    , cast(p.pet_des_fecha as date) fecha_entrega, p.dir_des_alias alias_destino
+    , cast(p.pet_org_fecha as date) fecha_recogida
+    , case
+        when p.subtipo = 1 then (select min(proveedor) from pedidos_etapas_detalle where ide=p.ide and pedido=p.id)
+        else (select min(cliente) from pedidos_etapas_detalle where ide=p.ide and pedido=p.id)
+        end as alias_origen
+    , cast(p.pet_des_fecha as date) fecha_entrega
+    , case
+        when p.subtipo = 1 then (select min(cliente) from pedidos_etapas_detalle where ide=p.ide and pedido=p.id)
+        else (select min(proveedor) from pedidos_etapas_detalle where ide=p.ide and pedido=p.id)
+        end as alias_destino
     , '' slb
     , '' as puerta
     , (select sum(peso_bruto) from pedidos_etapas_detalle where ide=p.ide and pedido=p.id) as peso
