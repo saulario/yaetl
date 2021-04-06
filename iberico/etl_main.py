@@ -169,9 +169,8 @@ def asignar_pedido(ctx, albaran):
     for pedido in ctx.ped_map.get(albaran.albaran) or []:
         if pedido.flujo != albaran.flujo:
             continue
-        if pedido.alias_origen != albaran.alias_origen:
-            continue
-        if pedido.alias_destino != albaran.alias_destino:
+        if (pedido.alias_origen != albaran.alias_origen and
+            pedido.alias_destino != albaran.alias_destino):
             continue
         """
         puerta = albaran.puerta_destino if albaran.flujo == "VG" else albaran.puerta_origen
@@ -181,11 +180,13 @@ def asignar_pedido(ctx, albaran):
         albaran.pedido_wo = pedido.pedido
         albaran.expedicion_wo = pedido.expedicion
         albaran.importe_wo = pedido.importe_total
-        # esto hay que cogerlo con pinzas
+        # esto no se puede porque no tenemos los datos a nivel de albaran
+        """
         if pedido.tarifa:
             albaran.peso = pedido.peso
             albaran.volumen = pedido.volumen
             albaran.peso_facturable = pedido.peso_facturable
+        """
         break
 
     """
@@ -266,11 +267,11 @@ if __name__ == "__main__":
     ctx = iberico.context.Context(cp)
     ctx.fromDate = dt.date(2021, 1, 1)
 
-    actualizar = True
+    actualizar = False
     if actualizar:
-        #iberico.etl_wo.run(ctx)
+        iberico.etl_wo.run(ctx)
         #iberico.etl_mtb.run(ctx)
-        iberico.etl_plus.run(ctx)
+        #iberico.etl_plus.run(ctx)
 
     cruzar_datos(ctx)
 

@@ -3,6 +3,7 @@ import configparser
 import datetime as dt
 import logging
 import os
+import re
 
 import openpyxl
 from sqlalchemy import Table, and_, between
@@ -12,9 +13,32 @@ import iberico.context
 log = logging.getLogger(__name__)
 
 
+albaran_re = re.compile(r"^LS: (?P<albaran>\d+)$")
+
+
 def procesar_vollgut(ctx, wb):
     log.info("-----> Procesando llenos")
 
+    wo_pedidos_t = Table("wo_pedidos", ctx.cf_metadata, autoload=True)
+
+    ws = wb.worksheets[0]
+    llenos = [ x for x in ws.rows if x[1].value is not None ][1:]
+
+    wsd = wb.worksheets[1]
+    detalles = [ x for x in wsd.rows if x[1].value is not None ][1:]
+
+    for fila in llenos:
+        fecha = fila[0].value
+        prov = fila[1].value
+        pais = fila[2].value
+        plz = fila[3].value
+
+        documentos = [ x[8].value for x in detalles if x[1].value == fecha 
+                and x[29].value == prov 
+                and x[46].value == pais 
+                and x[45].value == plz]
+        documentos = list(dict.fromkeys(documentos))
+        print(documentos)
 
     log.info("<----- Fin")
 
@@ -66,16 +90,12 @@ def procesar_leergut(ctx, wb):
         stmt = wo_pedidos_t.update(None).values(campos).where(wo_pedidos_t.c.Id == pedido.Id)
         ctx.cf_engine.execute(stmt)
 
-
-
-
-
     log.info("<----- Fin")
 
 
 def main(ctx, wb):
     procesar_vollgut(ctx, wb)
-    procesar_leergut(ctx, wb)
+    #procesar_leergut(ctx, wb)
 
 
 if __name__ == "__main__":
