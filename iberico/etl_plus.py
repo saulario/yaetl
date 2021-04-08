@@ -59,8 +59,9 @@ group by
     for row in rows:
         fila += 1
         if not (fila % 100):
-            log.info(f"\tprocesando ... {fila}")        
-        stmt = cf_plus_albaranes.insert(None).values(row)
+            log.info(f"\tprocesando ... {fila}")
+        d = dict(zip(row.keys(), row.values()))
+        stmt = cf_plus_albaranes.insert(None).values(d)
         cf_conn.execute(stmt)
 
     cf_conn.close()

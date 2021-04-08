@@ -53,7 +53,7 @@ def asignar_centro_coste(ctx, albaran):
     Centros de coste y claves de recogida
     """
     puerta = albaran.puerta_destino if albaran.flujo == "VG" else albaran.puerta_origen
-    clave = f"PORSCHE:{albaran.fecha_albaran.year}:{puerta}"
+    clave = f"PORSCHE:{albaran.fecha_recogida.year}:{puerta}"
     cc = ctx.cc_map.get(clave, None)
     albaran.centro_coste = None
     albaran.conso_fecha_entrega = None
@@ -172,6 +172,7 @@ def asignar_pedido(ctx, albaran):
     albaran.peso = None
     albaran.volumen = None
     albaran.peso_facturable = None
+    albaran.directo = 1 if albaran.bordero1 == albaran.bordero2 else 0
 
     for pedido in ctx.ped_map.get(albaran.albaran) or []:
         if pedido.flujo != albaran.flujo:
@@ -182,18 +183,17 @@ def asignar_pedido(ctx, albaran):
         albaran.pedido_wo = pedido.pedido
         albaran.expedicion_wo = pedido.expedicion
         albaran.importe_wo = pedido.importe_total
+        albaran.facturaid_wo = pedido.facturaid
         # esto no se puede porque no tenemos los datos a nivel de albaran
         break
     if albaran.pedido_wo:
         return
 
     # si no se han encontrado por albarán hay que buscar en la HR/EX más probable
-    directo = (albaran.bordero1 == albaran.bordero2)
-
     if albaran.flujo == "VG":
-        fuente = f"PLUS_EX_{albaran.expedicion}" if not directo else f"PLUS_HR_{albaran.hoja_ruta}"
+        fuente = f"PLUS_EX_{albaran.expedicion}" if not albaran.directo else f"PLUS_HR_{albaran.hoja_ruta}"
     else:
-        fuente = f"PLUS_HR_{albaran.hoja_ruta}" if not directo else f"PLUS_EX_{albaran.expedicion}"
+        fuente = f"PLUS_HR_{albaran.hoja_ruta}" if not albaran.directo else f"PLUS_EX_{albaran.expedicion}"
 
     pedidos = ctx.ped_fuente.get(fuente) or []
     for pedido in pedidos:
@@ -205,16 +205,16 @@ def asignar_pedido(ctx, albaran):
         albaran.pedido_wo = pedido.pedido
         albaran.expedicion_wo = pedido.expedicion
         albaran.importe_wo = pedido.importe_total
+        albaran.facturaid_wo = pedido.facturaid
         break
-    if albaran.pedido_wo:
-        return
+
 
 def aplicar_cambios(ctx):
     cf_conn = ctx.cf_engine.connect()
     cf_plus_albaranes = sqlalchemy.Table("plus_albaranes", ctx.cf_metadata, autoload=True)
 
     fila = 0
-    stmt = cf_plus_albaranes.select().where(cf_plus_albaranes.c.fecha_albaran >= ctx.fromDate)\
+    stmt = cf_plus_albaranes.select().where(cf_plus_albaranes.c.fecha_recogida >= ctx.fromDate)\
                 .order_by(cf_plus_albaranes.c.fecha_albaran)
     result = cf_conn.execute(stmt).fetchall()
     for row in result:
@@ -230,16 +230,17 @@ def aplicar_cambios(ctx):
         #asignar_desadv(ctx, albaran)
         asignar_pedido(ctx, albaran)
 
+        if not albaran.fecha_albaran: albaran.fecha_albaran = albaran.fecha_recogida        
+
         if albaran.fecha_recogida:
             albaran.anno_recogida = albaran.fecha_recogida.year
             albaran.mes_recogida = albaran.fecha_recogida.month + albaran.anno_recogida * 100
             albaran.semana_recogida = albaran.fecha_recogida.isocalendar()[1] + albaran.anno_recogida * 100
-
+            
         if albaran.fecha_entrega:
             albaran.anno_entrega = albaran.fecha_entrega.year
             albaran.mes_entrega = albaran.fecha_entrega.month + albaran.anno_entrega * 100
             albaran.semana_entrega = albaran.fecha_entrega.isocalendar()[1] + albaran.anno_entrega * 100
-
 
         stmt = cf_plus_albaranes.update(None).where(cf_plus_albaranes.c.Id == albaran.Id) \
                 .values(albaran.__dict__)
@@ -266,11 +267,11 @@ if __name__ == "__main__":
     ctx = iberico.context.Context(cp)
     ctx.fromDate = dt.date(2020, 6, 1)
 
-    actualizar = False
+    actualizar = True
     if actualizar:
         iberico.etl_wo.run(ctx)
         #iberico.etl_mtb.run(ctx)
-        #iberico.etl_plus.run(ctx)
+        iberico.etl_plus.run(ctx)
 
     cruzar_datos(ctx)
 

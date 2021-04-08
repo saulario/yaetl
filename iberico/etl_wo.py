@@ -2,7 +2,7 @@ import sqlalchemy
 
 import logging
 
-log = logging.getLogger(__file__)
+log = logging.getLogger(__name__)
 
 def borrar_pedidos(ctx):
     log.info("\tBorrando anteriores...")
@@ -65,6 +65,8 @@ select p.ide, p.id as pedido, p.exp_id as expedicion, p.cliente, p.estado, p.fac
     , (select sum(peso_neto) from pedidos_etapas_detalle where ide=p.ide and pedido=p.id) as peso_facturable
     , p.observaciones as albaranes
     , p.dim_cliente_7 as tarifa
+    , (select CONCAT(DIR_PAIS, DIR_CP) from pedidos_etapas where ide=p.ide and pedido=p.id and etapa=1 ) as zona_origen
+    , (select CONCAT(DIR_PAIS, DIR_CP) from pedidos_etapas where ide=p.ide and pedido=p.id and etapa=99 ) as zona_destino
 from pedidos p
 where
 p.ide = 1
@@ -80,7 +82,8 @@ and p.estado <> '8'
         fila += 1
         if not (fila % 100):
             log.info(f"\tprocesando ... {fila}")        
-        stmt = cf_wo_pedidos.insert(None).values(row)
+        d = dict(zip(row.keys(), row.values()))
+        stmt = cf_wo_pedidos.insert(None).values(d)
         cf_conn.execute(stmt)
 
     cf_conn.close()
