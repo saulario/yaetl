@@ -1,5 +1,6 @@
 import configparser
 import datetime as dt
+import json
 import logging
 import os
 
@@ -257,22 +258,38 @@ def cruzar_datos(ctx):
     log.info("<----- Fin")
 
 
-if __name__ == "__main__":
+def esta_configurado(ctx):
+    log.info("-----> Inicio")
+    retval = False
+    pp_t = sqlalchemy.Table("parametros", ctx.cf_metadata, autoload=True)
+    stmt = pp_t.select().where(pp_t.c.id == "ETL_IBERICO")
+    row = ctx.cf_engine.execute(stmt).fetchone()
+    if row:
+        retval = True
+        parametros = json.loads(row.parametros)
+        ctx.fromDate = dt.date.fromisoformat(parametros.get("fromDate"))
+        log.info(f"\t(fromDate): {ctx.fromDate}")
+    log.info("<----- Fin")
+    return retval
 
-    logging.basicConfig(level=logging.DEBUG)
-    log.info("-----> Info")
 
+def main():
     cp = configparser.ConfigParser()
     cp.read(os.path.expanduser("~") + "/etc/config.ini")
     ctx = iberico.context.Context(cp)
-    ctx.fromDate = dt.date(2020, 6, 1)
-
-    actualizar = True
-    if actualizar:
+    if esta_configurado(ctx):
         iberico.etl_wo.run(ctx)
         #iberico.etl_mtb.run(ctx)
         iberico.etl_plus.run(ctx)
+        cruzar_datos(ctx)
 
-    cruzar_datos(ctx)
-
+if __name__ == "__main__":
+    filename = os.path.expanduser("~") + "/log/etl_iberico.log"
+    logging.basicConfig(level=logging.DEBUG, filename=filename,
+            format="%(asctime)s %(levelname)s %(thread)d %(processName)s %(module)s %(funcName)s %(message)s" )
+    log.info("-----> Info")
+    try:
+        main()
+    except:
+        log.error("Se ha producido una excepción no controlada...", exc_info=True)
     log.info("<----- Fin")
