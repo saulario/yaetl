@@ -13,14 +13,16 @@ import wo.model
 log = logging.getLogger(__name__)
 
 if __name__ == "__main__":
-    logging.basicConfig(filename="c:/temp/asignar_expedicion.log", level=logging.DEBUG)
+    filename = os.path.expanduser("~") + "/log/asignar_expedicion.log"
+    logging.basicConfig(level=logging.DEBUG, filename=filename,
+            format="%(asctime)s %(levelname)s %(thread)d %(processName)s %(module)s %(funcName)s %(message)s" )
     log.info("-----> Info")
 
     cp = configparser.ConfigParser()
     cp.read(os.path.expanduser("~") + "/etc/config.ini")
     ctx = wo.context.Context(cp)
 
-    fromDate = dt.date(2021, 1, 1)
+    fromDate = dt.date.today() - dt.timedelta(days=90)
 
     expediciones_lineas = sqlalchemy.Table("expediciones_lineas", ctx.wo_metadata, autoload=True)
     expediciones_pe_ot = sqlalchemy.Table("expediciones_pe_ot", ctx.wo_metadata, autoload=True)
