@@ -1,3 +1,5 @@
+import datetime as dt
+
 import sqlalchemy
 
 import logging
@@ -76,8 +78,10 @@ AND P.CLIENTE = '37084'
 and p.estado <> '8'
 """)
 
+    # retrocedemos 15 días en la consulta para asegurar que están todos los pedidos
     fila = 0
-    rows = wo_conn.execute(stmt, fromDate=ctx.fromDate).fetchall()
+    fd = ctx.fromDate - dt.timedelta(days=15)
+    rows = wo_conn.execute(stmt, fromDate=fd).fetchall()
     for row in rows:
         fila += 1
         if not (fila % 100):

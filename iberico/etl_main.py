@@ -35,9 +35,10 @@ def cargar_maps(ctx):
     # albaranes y hay que asumir que están en la ruta
     ctx.ped_map = {}
     ctx.ped_fuente = {}
+    fd = ctx.fromDate - dt.timedelta(days=15)
     cf_wo_pedidos = sqlalchemy.Table("wo_pedidos", ctx.cf_metadata, autoload=True)
     stmt = cf_wo_pedidos.select().where(and_(
-        cf_wo_pedidos.c.fecha_recogida >= ctx.fromDate,
+        cf_wo_pedidos.c.fecha_recogida >= fd,
         cf_wo_pedidos.c.cliente == 37084))
     pedidos = ctx.cf_engine.execute(stmt).fetchall()
     for pedido in pedidos:
