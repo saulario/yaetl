@@ -29,7 +29,7 @@ def main(s, wb):
         site = int(row[1].value)
         if site != s:
             continue
-        slb = row[9].value
+        slb = row[8].value
         if not slb:
             continue
         slb = str(slb)
@@ -62,7 +62,7 @@ if __name__ == "__main__":
     parser.add_argument("-f", "--filename", dest="filename", help="Archivo XLSX a cargar")
 
     site = 1
-    filename = "c:/temp/porsche/slb_diciembre_palau.xlsx"
+    filename = "c:/temp/porsche/slb_2020.xlsx"
     parser.parse_args()
     
     try:
