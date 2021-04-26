@@ -86,6 +86,7 @@ def asignar_centro_coste(ctx, albaran):
         albaran.conso_fecha_recogida = f"{albaran.fecha_recogida.isoformat()}:{cc.cc2}:{albaran.alias_destino}"
         albaran.conso_fecha_entrega = f"{albaran.fecha_recogida.isoformat()}:{cc.cc2}:{albaran.alias_destino}"            
 
+
 def asignar_desadv_llenos(ctx, albaran):
 
     numalb = None
@@ -100,63 +101,35 @@ def asignar_desadv_llenos(ctx, albaran):
 
     mensajes = ctx.desadv_map.get(numalb)
     if not mensajes: 
-        albaran.slb = f"{albaran.slb}:NO ENCONTRADO"
+        albaran.slb = f"{albaran.slb or ''}:NO ENCONTRADO:"
         return
 
     o1 = (albaran.alias_origen + "0"*5)[:5]
 
+    encontrado = False
     for mensaje in mensajes:
         o2 = (mensaje.emisor + "0"*5)[:5]
         o3 = (mensaje.alias_origen + "0"*5)[:5]
-        if o1 == o2 or o1 == o3 and albaran.slb != mensaje.documento:
+        if (o1 == o2 or o1 == o3):
             albaran.fecha_recogida_solicitada = mensaje.fecha_recogida
             albaran.fecha_entrega_solicitada = mensaje.fecha_entrega
-            albaran.slb = f"{albaran.slb}:CORREGIR({mensaje.documento})"
+            try:
+                slb1 = int(albaran.slb)
+            except:
+                slb1 = None
+            try:
+                slb2 = int(mensaje.documento)
+            except:
+                slb2 = None
+            if slb1 != slb2:
+                albaran.slb = f"{albaran.slb or ''}:CORREGIR:{mensaje.documento}"
+            encontrado = True
             break
 
-
-
-
-
-
-    """
-
-    alias = None
-    puerta = None
-    if ":" in albaran.puerta_destino:
-        alias = albaran.puerta_destino.split(":")[1]
-        puerta = albaran.puerta_destino.split(":")[0]
-
-    stmt = cf_mtb_desadv.select().where(and_(
-        c.cliente == albaran.cliente,
-        c.albaran == albaran.albaran,
-        c.alias_origen == albaran.alias_origen,
-        c.alias_destino == alias,
-        c.puerta_destino == puerta
-    ))
-
-    if albaran.slb:
-        albaran.slb = albaran.slb.split(":")[0]
-    albaran.peso_asn = None
-    albaran.volumen_asn = None
-    albaran.fecha_recogida_solicitada = None
-    albaran.fecha_entrega_solicitada = None
-    asn = ctx.cf_engine.execute(stmt).fetchone()
-    if not asn:
-        if albaran.slb:
-            albaran.slb = f"{albaran.slb}:NO ENCONTRADO"
-        else:
-            albaran.slb = ":NO INFORMADO"
+    if not encontrado: 
+        albaran.slb = f"{albaran.slb or ''}:NO ENCONTRADO:"
         return
 
-    albaran.peso_asn = None
-    albaran.volumen_asn = None
-    albaran.fecha_recogida_solicitada = asn.fecha_recogida
-    albaran.fecha_entrega_solicitada = asn.fecha_entrega
-    if albaran.slb != asn.documento:
-        albaran.slb = f"{albaran.slb}:CORREGIR({asn.documento})"
-
-    """
 
 def asignar_desadv_vacios(ctx, albaran):
     """
@@ -166,7 +139,7 @@ def asignar_desadv_vacios(ctx, albaran):
     if albaran.slb:
         albaran.slb = albaran.slb.split(":")[0]
     else:
-        albaran.slb = ":NO INFORMADO"
+        albaran.slb = ":NO INFORMADO:"
     albaran.peso_asn = None
     albaran.volumen_asn = None
     albaran.fecha_recogida_solicitada = None

@@ -41,7 +41,7 @@ def procesar_mensajes(ctx):
     37084 as cliente
     , am.interchangesenderid as emisor
     , am.interchangerecipientid as receptor
-    , am.despatchadvicenumber as documento    
+    , am.consignmentreferencenumber as documento    
     , am.messageversion as tipo_documento
     , am.despatchadvicedate as fecha_documento
     , ap.deliverynotenumber as albaran
@@ -67,7 +67,7 @@ group by
     37084
     , am.interchangesenderid
     , am.interchangerecipientid 
-    , am.despatchadvicenumber 
+    , am.consignmentreferencenumber
     , am.messageversion 
     , am.despatchadvicedate 
     , ap.deliverynotenumber 
@@ -93,8 +93,6 @@ group by
         stmt = cf_mtb_desadv.insert(None).values(d)
         cf_conn.execute(stmt)
 
-    return
-
     """
     En el caso de LGI documento es número de discovery y shipmentid es a la vez albarán y SLB
     """
@@ -109,8 +107,10 @@ group by
     , st.shipmentid as albaran                              -- SLB
     , ts.dateofpreparation as fecha_recogida_solicitada
     , st.shipfromcode as alias_origen
+    , st.shipfromduns as alias_origen_duns
     , st.estimatedtimeofarrival fecha_entrega_solicitada
-    , st.shiptocode alias_destino
+    , st.shiptocode as alias_destino
+    , st.shiptoduns as alias_destino_duns
     , sum(hus.volume) volumen
     , sum(hus.grossweight) peso
 from vda_4945_transport_status ts
@@ -118,6 +118,7 @@ from vda_4945_transport_status ts
     left join vda_4945_handling_unit_status hus on hus.transportstatusid = st.transportstatusid and hus.shipmentstatusid = st.shipmentstatusid    
 where
     ts.interchangesenderid like '%LGI%'    
+    and ts.dateofpreparation >= :fromDate    
 group by
     37084
     , ts.interchangesenderid
@@ -128,13 +129,21 @@ group by
     , st.shipmentid
     , ts.dateofpreparation
     , st.shipfromcode
+    , st.shipfromduns
     , st.estimatedtimeofarrival 
     , st.shiptocode
+    , st.shiptoduns
 """ )
 
+    fila = 0
     rows = ctx.mtbm_engine.execute(stmt, fromDate=ctx.fromDate).fetchall()
     for row in rows:
-        stmt = cf_mtb_desadv.insert(None).values(row)
+        fila += 1
+        if not (fila % 100): log.info(f"\tprocesando ... {fila}")
+        d = dict(zip(row.keys(), row.values()))
+        d["anno_recogida"], d["mes_recogida"], d["semana_recogida"] = datos_fecha(row.fecha_recogida)
+        d["anno_entrega"], d["mes_entrega"], d["semana_entrega"] = datos_fecha(row.fecha_entrega)
+        stmt = cf_mtb_desadv.insert(None).values(d)
         cf_conn.execute(stmt)
 
     cf_conn.close()
