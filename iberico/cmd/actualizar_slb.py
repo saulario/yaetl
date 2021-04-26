@@ -61,8 +61,8 @@ if __name__ == "__main__":
     parser.add_argument("-s", "--site", dest="site", type=int, help="Site a procesar", default=1)
     parser.add_argument("-f", "--filename", dest="filename", help="Archivo XLSX a cargar")
 
-    site = 1
-    filename = "c:/temp/porsche/slb_2020.xlsx"
+    site = 3
+    filename = "c:/temp/porsche/slb_febrero_marzo.xlsx"
     parser.parse_args()
     
     try:

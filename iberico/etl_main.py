@@ -50,6 +50,22 @@ def cargar_maps(ctx):
                 ctx.ped_fuente[pedido.fuente] = []
             ctx.ped_fuente[pedido.fuente].append(pedido)
 
+    # albaranes recibidos en desadv pero eliminando ceros iniciales
+    ctx.desadv_map = {}
+    cf_mtb_desadv = sqlalchemy.Table("mtb_desadv", ctx.cf_metadata, autoload=True)
+    stmt = cf_mtb_desadv.select().where(cf_mtb_desadv.c.fecha_documento >= fd)
+    mensajes = ctx.cf_engine.execute(stmt).fetchall()
+    for mensaje in mensajes:
+        albaran = None
+        try:
+            albaran = int(mensaje.albaran)
+        except:
+            continue
+        if albaran not in ctx.desadv_map:
+            ctx.desadv_map[albaran] = []
+        ctx.desadv_map[albaran].append(mensaje)
+
+
 def asignar_centro_coste(ctx, albaran):
     """
     Centros de coste y claves de recogida
@@ -71,8 +87,39 @@ def asignar_centro_coste(ctx, albaran):
         albaran.conso_fecha_entrega = f"{albaran.fecha_recogida.isoformat()}:{cc.cc2}:{albaran.alias_destino}"            
 
 def asignar_desadv_llenos(ctx, albaran):
-    cf_mtb_desadv = sqlalchemy.Table("mtb_desadv", ctx.cf_metadata, autoload=True)
-    c = cf_mtb_desadv.c
+
+    numalb = None
+    try:
+        numalb = int(albaran.albaran)
+    except Exception:
+        numalb = None
+    if not numalb: return
+
+    if albaran.slb:
+        albaran.slb = albaran.slb.split(":")[0]
+
+    mensajes = ctx.desadv_map.get(numalb)
+    if not mensajes: 
+        albaran.slb = f"{albaran.slb}:NO ENCONTRADO"
+        return
+
+    o1 = (albaran.alias_origen + "0"*5)[:5]
+
+    for mensaje in mensajes:
+        o2 = (mensaje.emisor + "0"*5)[:5]
+        o3 = (mensaje.alias_origen + "0"*5)[:5]
+        if o1 == o2 or o1 == o3 and albaran.slb != mensaje.documento:
+            albaran.fecha_recogida_solicitada = mensaje.fecha_recogida
+            albaran.fecha_entrega_solicitada = mensaje.fecha_entrega
+            albaran.slb = f"{albaran.slb}:CORREGIR({mensaje.documento})"
+            break
+
+
+
+
+
+
+    """
 
     alias = None
     puerta = None
@@ -102,14 +149,14 @@ def asignar_desadv_llenos(ctx, albaran):
             albaran.slb = ":NO INFORMADO"
         return
 
-    albaran.peso_asn = asn.peso
-    albaran.volumen_asn = asn.volumen
-    albaran.fecha_recogida_solicitada = asn.fecha_recogida_solicitada
-    albaran.fecha_entrega_solicitada = asn.fecha_entrega_solicitada
+    albaran.peso_asn = None
+    albaran.volumen_asn = None
+    albaran.fecha_recogida_solicitada = asn.fecha_recogida
+    albaran.fecha_entrega_solicitada = asn.fecha_entrega
     if albaran.slb != asn.documento:
         albaran.slb = f"{albaran.slb}:CORREGIR({asn.documento})"
 
-
+    """
 
 def asignar_desadv_vacios(ctx, albaran):
     """
@@ -124,9 +171,6 @@ def asignar_desadv_vacios(ctx, albaran):
     albaran.volumen_asn = None
     albaran.fecha_recogida_solicitada = None
     albaran.fecha_entrega_solicitada = None
-
-    if not albaran.discovery:
-        return
 
     cf_mtb_desadv = sqlalchemy.Table("mtb_desadv", ctx.cf_metadata, autoload=True)
     c = cf_mtb_desadv.c
@@ -161,7 +205,8 @@ def asignar_desadv(ctx, albaran):
     if albaran.flujo == "VG":
         asignar_desadv_llenos(ctx, albaran)
     else:
-        asignar_desadv_vacios(ctx, albaran)
+        #asignar_desadv_vacios(ctx, albaran)
+        pass
 
 def asignar_pedido(ctx, albaran):
 
@@ -229,8 +274,6 @@ def aplicar_cambios(ctx):
         albaran.cliente = 37084
         albaran.flujo = "VG" if albaran.zt_destino == 370 else "LG"
         asignar_centro_coste(ctx, albaran)
-        #asignar_desadv(ctx, albaran)
-        asignar_pedido(ctx, albaran)
 
         if not albaran.fecha_albaran: albaran.fecha_albaran = albaran.fecha_recogida        
 
@@ -243,6 +286,9 @@ def aplicar_cambios(ctx):
             albaran.anno_entrega = albaran.fecha_entrega.year
             albaran.mes_entrega = albaran.fecha_entrega.month + albaran.anno_entrega * 100
             albaran.semana_entrega = albaran.fecha_entrega.isocalendar()[1] + albaran.anno_entrega * 100
+
+        asignar_desadv(ctx, albaran)
+        asignar_pedido(ctx, albaran)
 
         stmt = cf_plus_albaranes.update(None).where(cf_plus_albaranes.c.Id == albaran.Id) \
                 .values(albaran.__dict__)
@@ -279,9 +325,9 @@ def main():
     cp.read(os.path.expanduser("~") + "/etc/config.ini")
     ctx = iberico.context.Context(cp)
     if esta_configurado(ctx):
-        iberico.etl_wo.run(ctx)
+        #iberico.etl_wo.run(ctx)
         #iberico.etl_mtb.run(ctx)
-        iberico.etl_plus.run(ctx)
+        #iberico.etl_plus.run(ctx)
         cruzar_datos(ctx)
 
 if __name__ == "__main__":

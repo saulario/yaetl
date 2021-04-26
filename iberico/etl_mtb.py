@@ -7,6 +7,13 @@ import model
 
 log = logging.getLogger(__name__)
 
+def datos_fecha(f):
+    if f is None: return None, None, None
+    aa = f.year
+    mm = f.month + aa * 100
+    ss = f.isocalendar()[1] + aa * 100
+    return aa, mm, ss
+
 def borrar_mensajes(ctx):
     log.info("\tBorrando anteriores ...")
 
@@ -30,54 +37,63 @@ def procesar_mensajes(ctx):
     cf_mtb_desadv = sqlalchemy.Table("mtb_desadv", ctx.cf_metadata, autoload=True)
 
     log.info("\t\tProcesando ASN")
-    stmt =  sqlalchemy.sql.text(f"""SELECT 
+    stmt =  sqlalchemy.sql.text(f"""select
     37084 as cliente
-    , m.interchangerecipientid as emisor
-    , m.consignmentreferencenumber as documento
-    , m.messageversion as tipo_documento
-    , m.filedate as fecha_documento
-    , p.deliverynotenumber as albaran
-    , m.dateofpreparation as fecha_recogida_solicitada
-    , m.shipfromcode as alias_origen
-    , m.shipfromplaceofloadingid as puerta_origen
-    , m.requesteddeliverydate as fecha_entrega_solicitada
-    , m.shiptocode as alias_destino
-    , m.shiptoplaceofdeliveryid as puerta_destino
-    , m.grossweight as peso
-    , m.volume as volumen
-    , count(distinct p.deliverynotenumber) albaranes
-FROM asn_message m
-    join asn_parts p on p.asnmessageid = m.id and p.deliverynotenumber is not null
-WHERE 
-    m.FILENAME LIKE '%4987.TXT'
-    and m.filedate >= :fromDate
+    , am.interchangesenderid as emisor
+    , am.interchangerecipientid as receptor
+    , am.despatchadvicenumber as documento    
+    , am.messageversion as tipo_documento
+    , am.despatchadvicedate as fecha_documento
+    , ap.deliverynotenumber as albaran
+    , am.despatchadvicedate as fecha_recogida    
+    , am.shipfromcode as alias_origen
+    , am.shipfromduns as alias_origen_duns
+    , am.shipfromplaceofloadingid as puerta_origen
+    , aco.name as nombre_origen
+    , am.requesteddeliverydate as fecha_entrega
+    , am.shiptocode as alias_destino
+    , am.shiptoduns as alias_destino_duns
+    , am.shiptoplaceofdeliveryid as puerta_destino
+    , acd.name as nombre_destino
+from asn_message am
+    join asn_parts ap on ap.asnmessageid = am.id
+    left join pre_pluscore.actors aco on substr(aco.alias, 1, 5) = substr(am.shipfromcode, 1, 5)
+    left join pre_pluscore.actors acd on substr(acd.alias, 1, 5) = substr(am.shiptocode, 1, 5)
+where
+    am.filename like '%4987.TXT'
+    and ap.deliverynotenumber is not null
+    and am.filedate >= :fromDate
 group by
     37084
-    , m.interchangerecipientid
-    , m.consignmentreferencenumber
-    , m.messageversion
-    , m.filedate
-    , p.deliverynotenumber
-    , m.dateofpreparation
-    , m.shipfromcode
-    , m.shipfromplaceofloadingid
-    , m.requesteddeliverydate
-    , m.shiptocode
-    , m.shiptoplaceofdeliveryid
-    , m.grossweight
-    , m.volume
-
+    , am.interchangesenderid
+    , am.interchangerecipientid 
+    , am.despatchadvicenumber 
+    , am.messageversion 
+    , am.despatchadvicedate 
+    , ap.deliverynotenumber 
+    , am.despatchadvicedate 
+    , am.shipfromcode 
+    , am.shipfromduns 
+    , am.shipfromplaceofloadingid 
+    , aco.name
+    , am.requesteddeliverydate 
+    , am.shiptocode 
+    , am.shiptoduns 
+    , am.shiptoplaceofdeliveryid 
+    , acd.name
 """)    
+    fila = 0
     rows = ctx.mtbm_engine.execute(stmt, fromDate=ctx.fromDate).fetchall()
     for row in rows:
-        entity = model.Entity(row)
-        if entity.albaranes != 1:
-            entity.peso = None
-            entity.volume = None
-        d = entity.__dict__
-        d.pop("albaranes")
+        fila += 1
+        if not (fila % 100): log.info(f"\tprocesando ... {fila}")
+        d = dict(zip(row.keys(), row.values()))
+        d["anno_recogida"], d["mes_recogida"], d["semana_recogida"] = datos_fecha(row.fecha_recogida)
+        d["anno_entrega"], d["mes_entrega"], d["semana_entrega"] = datos_fecha(row.fecha_entrega)
         stmt = cf_mtb_desadv.insert(None).values(d)
         cf_conn.execute(stmt)
+
+    return
 
     """
     En el caso de LGI documento es número de discovery y shipmentid es a la vez albarán y SLB
