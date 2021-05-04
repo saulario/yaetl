@@ -84,6 +84,7 @@ group by
 """)    
     fila = 0
     rows = ctx.mtbm_engine.execute(stmt, fromDate=ctx.fromDate).fetchall()
+
     for row in rows:
         fila += 1
         if not (fila % 100): log.info(f"\tprocesando ... {fila}")
@@ -96,7 +97,7 @@ group by
     """
     En el caso de LGI documento es número de discovery y shipmentid es a la vez albarán y SLB
     """
-    log.info("\t\tProcesando vda4945 LGI")
+    log.info("\t\tProcesando VDA 4945 LGI")
     stmt =  sqlalchemy.sql.text(f"""select 
     37084 as cliente
     , ts.interchangesenderid as emisor
@@ -105,17 +106,15 @@ group by
     , 'VDA4945-VACIOS' as tipo_documento
     , ts.dateofpreparation as fecha_documento
     , st.shipmentid as albaran                              -- SLB
-    , ts.dateofpreparation as fecha_recogida_solicitada
+    , ts.dateofpreparation as fecha_recogida
     , st.shipfromcode as alias_origen
     , st.shipfromduns as alias_origen_duns
-    , st.estimatedtimeofarrival fecha_entrega_solicitada
+    , st.estimatedtimeofarrival fecha_entrega
     , st.shiptocode as alias_destino
     , st.shiptoduns as alias_destino_duns
-    , sum(hus.volume) volumen
-    , sum(hus.grossweight) peso
 from vda_4945_transport_status ts
     join vda_4945_shipment_status st on st.transportstatusid = ts.id
-    left join vda_4945_handling_unit_status hus on hus.transportstatusid = st.transportstatusid and hus.shipmentstatusid = st.shipmentstatusid    
+    --left join vda_4945_handling_unit_status hus on hus.transportstatusid = st.transportstatusid and hus.shipmentstatusid = st.shipmentstatusid    
 where
     ts.interchangesenderid like '%LGI%'    
     and ts.dateofpreparation >= :fromDate    

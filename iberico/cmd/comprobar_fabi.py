@@ -19,13 +19,31 @@ albaran_re = re.compile(r"^LS: (?P<albaran>\d+)$")
 def procesar_vollgut(ctx, wb):
     log.info("-----> Procesando llenos")
 
-    wo_pedidos_t = Table("wo_pedidos", ctx.cf_metadata, autoload=True)
+    # precarga los albaranes con id numérico
+    albaranes ={}
+    plus_albaranes_t = Table("plus_albaranes", ctx.cf_metadata, autoload="True")
+    stmt = plus_albaranes_t.select().where(and_(
+        plus_albaranes_t.c.fecha_albaran >= ctx.fromDate,
+        plus_albaranes_t.c.flujo == "VG",
+        plus_albaranes_t.c.albaran != None,
+    ))
+    rows = ctx.cf_engine.execute(stmt).fetchall()
+    for albaran in rows:
+        albnum = None
+        try:
+            albnum = int(albaran.albaran)
+        except ValueError: continue
+        if albnum not in albaranes:
+            albaranes[albnum] = []
+        albaranes[albnum].append(albaran)
 
     ws = wb.worksheets[0]
     llenos = [ x for x in ws.rows if x[1].value is not None ][1:]
 
     wsd = wb.worksheets[1]
     detalles = [ x for x in wsd.rows if x[1].value is not None ][1:]
+
+    log.info(f"\t\talbaran\tfecha\tproveedor\tfecha recogida\talias origen\tpedido WO")
 
     for fila in llenos:
         fecha = fila[0].value
@@ -39,39 +57,35 @@ def procesar_vollgut(ctx, wb):
                 and x[45].value == plz]
         documentos = list(dict.fromkeys(documentos))
         for doc in documentos:
+
             match = albaran_re.match(doc)
             if not match:
                 continue
-            albaran = f"%{match.group('albaran')}%" 
-            dias = dt.timedelta(days=8)
-            fd = fecha - dias
-            td = fecha + dias
+            try:
+                numalb = int(match.group('albaran'))
+            except ValueError: continue
 
-            stmt = wo_pedidos_t.select().where(and_(
-                wo_pedidos_t.c.albaranes.like(albaran),
-                between(wo_pedidos_t.c.fecha_recogida, fd, td),
-                wo_pedidos_t.c.cliente == 37084
-            ))
+            encontrado = None
+            if numalb in albaranes:
+                td = dt.timedelta(days=10)
+                fd = (fecha - td).date()
+                fh = (fecha + td).date()
+                for alb in albaranes[numalb]:
+                    if alb.fecha_albaran >= fd and alb.fecha_albaran <= fh:
+                        encontrado = alb
+                        break
+            
+            alias_origen = ""
+            pedido_wo = ""
+            fecha_recogida = ""
+            if encontrado:
+                alias_origen = encontrado.alias_origen or None
+                pedido_wo = encontrado.pedido_wo or None
+                fecha_recogida = encontrado.fecha_recogida.isoformat()
 
-            rows = ctx.cf_engine.execute(stmt).fetchall()
-            if not len(rows):
-                log.info(f"\t\tNo se ha encontrado pedido asociado para el albarán. {albaran}")
-                continue
-            if len(rows) > 1:
-                log.info(f"\t\tSe han encontrado varios pedidos {[ x.pedido for x in rows ]}")
-                continue
+            log.info(f"\t\t{numalb}\t{fecha.date().isoformat()}\t{prov}\t{fecha_recogida}\t{alias_origen}\t{pedido_wo}")
 
-            pedido = rows[0]
-            importe = fila[15].value + fila[18].value
-            pf = fila[12].value
-            campos = { 
-                'importe_cliente' : round(importe, 2),
-                'peso_facturable_cliente' : round(pf, 2),
-            }
 
-            stmt = wo_pedidos_t.update(None).values(campos).where(wo_pedidos_t.c.Id == pedido.Id)
-            ctx.cf_engine.execute(stmt)
-            break
 
 
     log.info("<----- Fin")
@@ -129,15 +143,17 @@ def procesar_leergut(ctx, wb):
 
 def main(ctx, wb):
     procesar_vollgut(ctx, wb)
-    procesar_leergut(ctx, wb)
+    #procesar_leergut(ctx, wb)
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
-    log.info("-----> Inicio")
+    filename = os.path.expanduser("~") + "/log/comprobar_fabi.log"
+    logging.basicConfig(level=logging.DEBUG, filename=filename,
+            format="%(asctime)s %(levelname)s %(thread)d %(processName)s %(module)s %(funcName)s %(message)s" )
 
-    parser = argparse.ArgumentParser(description="Actualiza SLB en albaranes Porsche")
+    parser = argparse.ArgumentParser(description="Comprueba la composición del archivo FABI")
     parser.add_argument("-f", "--filename", dest="filename", help="Archivo XLSX a cargar")
+    parser.add_argument("-s", "--site", dest="site", help="Site a verificar", default=0)
 
     site = 1
     filename = "c:/temp/porsche/FABI.xlsx"

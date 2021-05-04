@@ -65,6 +65,24 @@ def cargar_maps(ctx):
             ctx.desadv_map[albaran] = []
         ctx.desadv_map[albaran].append(mensaje)
 
+    # vacíos recibidos en iftsta pero transformados en asn. Aquí los buscamos por
+    # documento, y recuperamos el albarán
+    ctx.vda4945_map = {}
+    stmt = cf_mtb_desadv.select().where(and_(
+            cf_mtb_desadv.c.fecha_documento >= fd,
+            cf_mtb_desadv.c.tipo_documento == 'VDA4945-VACIOS'
+        ))
+    mensajes = ctx.cf_engine.execute(stmt).fetchall()
+    for mensaje in mensajes:
+        documento = None
+        try:
+            documento = int(mensaje.documento)
+        except:
+            continue
+        if documento not in ctx.vda4945_map:
+            ctx.vda4945_map[documento] = []
+        ctx.vda4945_map[documento].append(mensaje)
+
 
 def asignar_centro_coste(ctx, albaran):
     """
@@ -136,49 +154,57 @@ def asignar_desadv_vacios(ctx, albaran):
     Esta búsqueda es para LGI, con la entrada de schaeffer hay que ampliarla dependiendo
     también de cómo entren sus datos.
     """
-    if albaran.slb:
-        albaran.slb = albaran.slb.split(":")[0]
-    else:
-        albaran.slb = ":NO INFORMADO:"
-    albaran.peso_asn = None
-    albaran.volumen_asn = None
-    albaran.fecha_recogida_solicitada = None
-    albaran.fecha_entrega_solicitada = None
 
-    cf_mtb_desadv = sqlalchemy.Table("mtb_desadv", ctx.cf_metadata, autoload=True)
-    c = cf_mtb_desadv.c
-    stmt = cf_mtb_desadv.select().where(and_(
-        c.cliente == albaran.cliente,
-        c.emisor == 'O0013003102LGI',
-        c.documento == albaran.discovery
-    ))
-
-    asn = ctx.cf_engine.execute(stmt).fetchone()
-    if not asn:
-        albaran.slb = f"{albaran.slb}:NO ENCONTRADO"
+    if not albaran.discovery: 
+        albaran.slb = f"{albaran.slb or ''}:NO ENCONTRADO:"
         return
 
+    albaran.discovery = albaran.discovery.split(":")[0]
+    try:
+        discovery = int(albaran.discovery)
+    except Exception:
+        discovery = None
+    if not discovery: return
 
-    albaran.peso_asn = asn.peso
-    albaran.volumen_asn = asn.volumen
-    albaran.fecha_recogida_solicitada = asn.fecha_recogida_solicitada
-    albaran.fecha_entrega_solicitada = asn.fecha_entrega_solicitada
-    if albaran.slb != asn.albaran:
-        albaran.slb = f"{albaran.albaran}:CORREGIR({asn.documento})"
+    if albaran.slb:
+        albaran.slb = albaran.slb.split(":")[0]    
+    if albaran.discovery:
+        albaran.discovery = albaran.discovery.split(":")[0]    
 
+    mensajes = ctx.vda4945_map.get(discovery)
+    if not mensajes: 
+        albaran.slb = f"{albaran.slb or ''}:NO ENCONTRADO:"
+        return
 
-
-
-
-
+    encontrado = False
+    for mensaje in mensajes:
+        albaran.fecha_recogida_solicitada = mensaje.fecha_recogida
+        albaran.fecha_entrega_solicitada = mensaje.fecha_entrega
+        try:
+            slb1 = int(albaran.slb)
+        except:
+            slb1 = None
+        try:
+            slb2 = int(mensaje.albaran)
+        except:
+            slb2 = None
+        if slb1 != slb2:
+            albaran.slb = f"{albaran.slb or ''}:CORREGIR:{mensaje.albaran}"
+        encontrado = True
+        break
+        
+    if not encontrado: 
+        albaran.slb = f"{albaran.slb or ''}:NO ENCONTRADO:"
+        return
 
 
 
 def asignar_desadv(ctx, albaran):
     if albaran.flujo == "VG":
         asignar_desadv_llenos(ctx, albaran)
+        pass
     else:
-        #asignar_desadv_vacios(ctx, albaran)
+        asignar_desadv_vacios(ctx, albaran)
         pass
 
 def asignar_pedido(ctx, albaran):
@@ -298,9 +324,9 @@ def main():
     cp.read(os.path.expanduser("~") + "/etc/config.ini")
     ctx = iberico.context.Context(cp)
     if esta_configurado(ctx):
-        #iberico.etl_wo.run(ctx)
-        #iberico.etl_mtb.run(ctx)
-        #iberico.etl_plus.run(ctx)
+        iberico.etl_wo.run(ctx)
+        iberico.etl_mtb.run(ctx)
+        iberico.etl_plus.run(ctx)
         cruzar_datos(ctx)
 
 if __name__ == "__main__":
