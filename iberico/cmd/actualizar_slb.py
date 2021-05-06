@@ -54,20 +54,21 @@ def main(s, wb):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
+    filename = os.path.expanduser("~") + "/log/actualizar_slb.log"
+    logging.basicConfig(level=logging.DEBUG, filename=filename,
+            format="%(asctime)s %(levelname)s %(thread)d %(processName)s %(module)s %(funcName)s %(message)s" )
     log.info("-----> Inicio")
 
     parser = argparse.ArgumentParser(description="Actualiza SLB en albaranes Porsche")
-    parser.add_argument("-s", "--site", dest="site", type=int, help="Site a procesar", default=1)
-    parser.add_argument("-f", "--filename", dest="filename", help="Archivo XLSX a cargar")
-
-    site = 3
-    filename = "c:/temp/porsche/slb_febrero_marzo.xlsx"
+    parser.add_argument("-f", "--filename", dest="filename", help="Archivo XLSX a cargar",
+            default="c:/temp/porsche/actualizar_slb.xlsx")
     parser.parse_args()
-    
+
+    filename = "c:/temp/porsche/actualizar_slb.xlsx"    
     try:
         wb = openpyxl.load_workbook(filename)
-        main(site, wb)
+        main(1, wb)
+        main(3, wb)
     except openpyxl.utils.exceptions.InvalidFileException as e:
         log.error(e)
 

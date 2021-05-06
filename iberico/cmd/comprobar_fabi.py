@@ -16,14 +16,17 @@ log = logging.getLogger(__name__)
 albaran_re = re.compile(r"^LS: (?P<albaran>\d+)$")
 
 
-def procesar_vollgut(ctx, wb):
+def vg_fabi_plus(ctx, wb):
+    """
+    Lee los albaranes de fabi y los contrasta contra plus
+    """
     log.info("-----> Procesando llenos")
 
     # precarga los albaranes con id numérico
     albaranes ={}
     plus_albaranes_t = Table("plus_albaranes", ctx.cf_metadata, autoload="True")
     stmt = plus_albaranes_t.select().where(and_(
-        plus_albaranes_t.c.fecha_albaran >= ctx.fromDate,
+        plus_albaranes_t.c.fecha_entrega.between(ctx.fromDate, ctx.toDate),
         plus_albaranes_t.c.flujo == "VG",
         plus_albaranes_t.c.albaran != None,
     ))
@@ -71,7 +74,7 @@ def procesar_vollgut(ctx, wb):
                 fd = (fecha - td).date()
                 fh = (fecha + td).date()
                 for alb in albaranes[numalb]:
-                    if alb.fecha_albaran >= fd and alb.fecha_albaran <= fh:
+                    if alb.fecha_entrega >= fd and alb.fecha_entrega <= fh:
                         encontrado = alb
                         break
             
@@ -86,9 +89,72 @@ def procesar_vollgut(ctx, wb):
             log.info(f"\t\t{numalb}\t{fecha.date().isoformat()}\t{prov}\t{fecha_recogida}\t{alias_origen}\t{pedido_wo}")
 
 
+    log.info("<----- Fin")
 
+
+def vg_plus_fabi(ctx, wb):
+    """
+    Lee los albaranes de plus y los contrasta con los de fabi. Tenemos que dejar un margen amplio 
+    de fechas porque hay decalages superiores a una semana
+    """
+    log.info("-----> Inicio")
+
+    fabis = {}
+    ws = wb.worksheets[1]    
+    for row in [ x for x in ws.rows if x[1].value is not None ][1:]:
+        albaran = row[8].value
+
+        match = albaran_re.match(albaran)
+        if not match: continue
+        albnum = int(match.group("albaran"))
+
+        if not albnum in fabis:
+            fabis[albnum] = []
+        fabis[albnum].append(row)
+
+    albaranes ={}
+    plus_albaranes_t = Table("plus_albaranes", ctx.cf_metadata, autoload="True")
+    stmt = plus_albaranes_t.select().where(and_(
+        plus_albaranes_t.c.fecha_entrega.between(ctx.fromDate, ctx.toDate),
+        plus_albaranes_t.c.flujo == "VG",
+        plus_albaranes_t.c.alias_destino == "L01",
+        plus_albaranes_t.c.albaran != None,
+    )).order_by(plus_albaranes_t.c.albaran)
+    rows = ctx.cf_engine.execute(stmt).fetchall()
+    
+    for row in rows:
+        if "GESTAMP" in row.nombre_origen: continue
+        try:
+            numalb = int(row.albaran)
+        except ValueError:
+            continue
+
+        encontrado = None
+        if numalb in fabis:
+            td = dt.timedelta(days=10)
+            fd = row.fecha_entrega - td
+            fh = row.fecha_entrega + td
+
+            for fabi in fabis[numalb]:
+                fecha = fabi[1].value.date()
+                if fecha >= fd and fecha <= fh:
+                    encontrado = fabi
+                    break
+
+        fecha = ""
+        prov = ""
+        if encontrado:
+            fecha = encontrado[1].value.date().isoformat()
+            prov = encontrado[29].value
+
+        log.info(f"\t\t{row.site}\t{numalb}\t{row.fecha_recogida.isoformat()}\t{row.alias_origen}\t{row.nombre_origen}\t{row.pedido_wo or ''}\t{prov}\t{fecha}")
 
     log.info("<----- Fin")
+
+
+def procesar_vollgut(ctx, wb):
+    vg_fabi_plus(ctx, wb)
+    vg_plus_fabi(ctx, wb)
 
 
 def procesar_leergut(ctx, wb):
@@ -146,10 +212,25 @@ def main(ctx, wb):
     #procesar_leergut(ctx, wb)
 
 
+
+def calcular_fechas(periodo):
+    s = str(periodo)
+    aa = int(f"{s[:4]}")
+    mm = int(f"{s[-2:]}")
+
+    td = dt.timedelta(days=15)
+    fd = dt.date(aa, mm, 1) - dt.timedelta(days=15)
+    td = dt.date(aa, mm, 1) + dt.timedelta(days=45)
+
+    return fd, td
+
+
 if __name__ == "__main__":
     filename = os.path.expanduser("~") + "/log/comprobar_fabi.log"
     logging.basicConfig(level=logging.DEBUG, filename=filename,
             format="%(asctime)s %(levelname)s %(thread)d %(processName)s %(module)s %(funcName)s %(message)s" )
+
+    log.info("-----> Inicio")
 
     parser = argparse.ArgumentParser(description="Comprueba la composición del archivo FABI")
     parser.add_argument("-f", "--filename", dest="filename", help="Archivo XLSX a cargar")
@@ -162,12 +243,13 @@ if __name__ == "__main__":
     cp = configparser.ConfigParser()
     cp.read(os.path.expanduser("~") + "/etc/config.ini")
     ctx = iberico.context.Context(cp)
-    ctx.fromDate = dt.date(2021, 1, 1)
+    ctx.periodo = 202104
+    ctx.fromDate, ctx.toDate = calcular_fechas(ctx.periodo)
 
     try:
         wb = openpyxl.load_workbook(filename)
         main(ctx, wb)
-    except openpyxl.utils.exceptions.InvalidFileException as e:
-        log.error(e)
+    except Exception as e:
+        log.error(e, exc_info=True)
 
     log.info("<----- Fin")
