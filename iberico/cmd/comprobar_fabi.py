@@ -243,7 +243,7 @@ if __name__ == "__main__":
     cp = configparser.ConfigParser()
     cp.read(os.path.expanduser("~") + "/etc/config.ini")
     ctx = iberico.context.Context(cp)
-    ctx.periodo = 202104
+    ctx.periodo = 202105
     ctx.fromDate, ctx.toDate = calcular_fechas(ctx.periodo)
 
     try:
