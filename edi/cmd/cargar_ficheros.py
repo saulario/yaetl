@@ -13,11 +13,13 @@ log = logging.getLogger(__name__)
 class EdiMensajes():
     
     def __init__(self):
+        self.fechaCreacion = None
         self.fecha = None
         self.fechaYYYY = None
         self.fechaYYYYMM = None
         self.fechaYYYYWW = None
         self.buzon = None
+        self.flujo = None
         self.archivo = None
         self.proceso = None
         self.tamano = None
@@ -40,17 +42,20 @@ class LocalContext():
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.conn.close()
 
-def procesar_fichero(lc, file):
+def procesar_fichero(lc, flujo, file):
     log.info(f"\t(file): {file.name}")
     st = file.stat()
     em = EdiMensajes()
     em.buzon = lc.buzon    
+    em.flujo = flujo
     em.archivo = file.name
     try:
-        em.proceso = file.name.split(".")[-2]
+        idx = -1 if flujo == "OUT" else -2
+        em.proceso = file.name.split(".")[idx]
     except:
         pass
-    em.fecha = dt.datetime.fromtimestamp(st.st_ctime)
+    em.fechaCreacion = dt.datetime.fromtimestamp(st.st_ctime)
+    em.fecha = em.fechaCreacion.date()
     em.fechaYYYY = em.fecha.year
     em.fechaYYYYMM = em.fecha.year * 100 + em.fecha.month
     em.fechaYYYYWW = em.fecha.year * 100 + em.fecha.isocalendar()[1]
@@ -60,9 +65,17 @@ def procesar_fichero(lc, file):
     stmt = em_t.insert(None).values(em.__dict__)
     lc.conn.execute(stmt)
 
-def procesar_directorio(lc, dir):
+    if flujo == "OUT":
+        file.unlink()
+    else:
+        file.rename(f"{str(file.parent)}/procesados/{file.name}")
+
+def procesar_directorio(lc, flujo, dir):
     log.info("-----> Inicio")
-    log.info(f"\t(dir): {dir}")
+    log.info(f"\t(flujo): {flujo}")
+    log.info(f"\t(dir)  : {dir}")
+
+    if not dir: return
 
     path = pathlib.Path(dir)
     if not path.is_dir(): return
@@ -73,7 +86,7 @@ def procesar_directorio(lc, dir):
         pass
 
     for file in [ f for f in path.glob("*") if f.is_file() ]:
-        procesar_fichero(lc, file)
+        procesar_fichero(lc, flujo, file)
 
     log.info("<----- Fin")
 
@@ -83,7 +96,8 @@ def procesar_buzon(lc):
     stmt = buzones_t.select().where(buzones_t.c.codigo == lc.buzon)
     row = lc.conn.execute(stmt).fetchone()
     if row:
-        procesar_directorio(lc, row.path)
+        procesar_directorio(lc, "IN", row.pathIn)
+        procesar_directorio(lc, "OUT", row.pathOut)
 
 if __name__ == "__main__":
     filename = os.path.expanduser("~") + "/log/cargar_ficheros.log"
@@ -91,7 +105,6 @@ if __name__ == "__main__":
             format="%(asctime)s %(levelname)s %(thread)d %(processName)s %(module)s %(funcName)s %(message)s" )
     log.info("-----> Inicio")
 
-    directory = None
     parser = argparse.ArgumentParser(description="Procesa archivos EDI en una carpeta")
     parser.add_argument("-b", dest="buzon", action="store", help="Buzón a procesar")
     args = parser.parse_args()
