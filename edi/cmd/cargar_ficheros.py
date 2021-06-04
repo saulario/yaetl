@@ -18,6 +18,7 @@ class EdiMensajes():
         self.fechaYYYY = None
         self.fechaYYYYMM = None
         self.fechaYYYYWW = None
+        self.fechaYYYYWD = None
         self.buzon = None
         self.flujo = None
         self.archivo = None
@@ -59,6 +60,7 @@ def procesar_fichero(lc, flujo, file):
     em.fechaYYYY = em.fecha.year
     em.fechaYYYYMM = em.fecha.year * 100 + em.fecha.month
     em.fechaYYYYWW = em.fecha.year * 100 + em.fecha.isocalendar()[1]
+    em.fechaYYYYWD = em.fecha.year * 100 + em.fecha.isoweekday()
     em.tamano = st.st_size
 
     em_t = sqlalchemy.Table("edi_mensajes", lc.metadata, autoload=True)
