@@ -18,7 +18,8 @@ class EdiMensajes():
         self.fechaYYYY = None
         self.fechaYYYYMM = None
         self.fechaYYYYWW = None
-        self.fechaYYYYWD = None
+        self.fechaWD = None
+        self.fechaHH = None
         self.buzon = None
         self.flujo = None
         self.archivo = None
@@ -60,7 +61,8 @@ def procesar_fichero(lc, flujo, file):
     em.fechaYYYY = em.fecha.year
     em.fechaYYYYMM = em.fecha.year * 100 + em.fecha.month
     em.fechaYYYYWW = em.fecha.year * 100 + em.fecha.isocalendar()[1]
-    em.fechaYYYYWD = em.fecha.year * 100 + em.fecha.isoweekday()
+    em.fechaWD = em.fecha.isoweekday()
+    em.fechaHH = em.fechaCreacion.time().hour
     em.tamano = st.st_size
 
     em_t = sqlalchemy.Table("edi_mensajes", lc.metadata, autoload=True)
@@ -72,6 +74,15 @@ def procesar_fichero(lc, flujo, file):
     else:
         file.rename(f"{str(file.parent)}/procesados/{file.name}")
 
+def borrar_ficheros_antiguos(p):
+    ahora = dt.datetime.now()
+    for file in p.glob("*"):
+        st = file.stat()
+        fc = dt.datetime.fromtimestamp(st.st_mtime)
+        td = ahora - fc
+        if td.days > 7:
+            file.unlink()
+
 def procesar_directorio(lc, flujo, dir):
     log.info("-----> Inicio")
     log.info(f"\t(flujo): {flujo}")
@@ -82,13 +93,17 @@ def procesar_directorio(lc, flujo, dir):
     path = pathlib.Path(dir)
     if not path.is_dir(): return
 
+    procesados = None
     try:
-        pathlib.Path(path._str + "\procesados").mkdir()
+        procesados = pathlib.Path(path._str + "\procesados")
+        procesados.mkdir()
     except FileExistsError:
         pass
 
     for file in [ f for f in path.glob("*") if f.is_file() ]:
         procesar_fichero(lc, flujo, file)
+
+    borrar_ficheros_antiguos(procesados)
 
     log.info("<----- Fin")
 
