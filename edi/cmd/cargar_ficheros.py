@@ -36,7 +36,7 @@ class LocalContext():
         self.conn = None
 
     def __enter__(self):
-        self.engine = sqlalchemy.create_engine(cp.get("DATASOURCES", "controlfac"))
+        self.engine = sqlalchemy.create_engine(self.cp.get("DATASOURCES", "controlfac"))
         self.metadata = sqlalchemy.MetaData(bind=self.engine)
         self.conn = self.engine.connect()
         return self
