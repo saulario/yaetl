@@ -3,6 +3,7 @@ import configparser
 import logging
 import os
 import pathlib
+import re
 import time
 
 import shapely.geometry
@@ -14,6 +15,8 @@ from msrest.authentication import CognitiveServicesCredentials
 from shapely.geometry.geo import shape
 
 log = logging.getLogger(__name__)
+
+importe_re = re.compile(r"^(?P<importe>\d+,\d+)\s*EUR$")
 
 class LocalContext():
 
@@ -28,26 +31,26 @@ class LocalContext():
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.conn.close()
+        pass
 
 class Carta():
     #factura = shapely.geometry.box(6.2948, 3.4234, 6.8866, 3.5526)
     #fecha = shapely.geometry.box(6.2732, 3.2296, 6.9619, 3.3481)
     #importe = shapely.geometry.box(6.5422, 7.1483, 7.4353, 7.3098)
 
-    factura = shapely.geometry.box(6.2948, 3.4234, 6.8866, 3.5526)
-    fecha = shapely.geometry.box(6.2732, 3.2296, 6.9619, 3.3481)
-    importe = shapely.geometry.box(6.2, 7.1, 7.5, 7.4)
+    fecha   = shapely.geometry.box(6.2, 3.1, 7.0, 3.5)
+    factura = shapely.geometry.box(6.2, 3.3, 7.0, 3.7)
+    importe = shapely.geometry.box(6.0, 7.0, 7.7, 7.6)
 
 
-    comentario = shapely.geometry.box(1.7216, 5.2751, 2.873, 5.415)
-    codigo = shapely.geometry.box(1.1298, 6.1471, 1.7324, 6.287)
-    nombre = shapely.geometry.box(4.8314, 6.104, 5.6061, 6.2547)
-    slbs = shapely.geometry.box(2.3457, 6.1363, 5.0, 14.0)
+    comentario = shapely.geometry.box(1.6, 5.2, 8.0, 5.5)
+    codigo = shapely.geometry.box(1.0, 6.0, 2.5, 6.6)
+    nombre = shapely.geometry.box(4.6, 6.0, 9.0, 7.0)
+    slbs = shapely.geometry.box(2.3, 6.0, 5.0, 10.0)
 
 
 class Datos():
-    pagina = 0
+    pagina = None
     fecha = None
     factura = None
     importe = None
@@ -57,30 +60,34 @@ class Datos():
     slbs = None
 
 def procesar_carta(datos, lineas):
-    datos.pagina += 1
-    for f in [ f for f in lineas if f.box.almost_equals(Carta.factura, decimal=1) ]:
+    for f in [ f for f in lineas if f.box.within(Carta.factura) ]:
         datos.factura = f.text
         break
-    for f in [ f for f in lineas if f.box.almost_equals(Carta.fecha, decimal=1) ]:
-        datos.fecha =  f.text
+    for f in [ f for f in lineas if f.box.within(Carta.fecha) ]:
+        datos.fecha =  f.text.replace(".", "/") if f.text else None
         break
     for f in [ f for f in lineas if f.box.within(Carta.importe) ]:
-        datos.importe = f.text
+        m = importe_re.match(f.text)
+        if m:
+            datos.importe = m.group("importe")
+        else:
+            datos.importe = f.text
         break
 
 def procesar_cargo(datos, lineas):
-    for f in [ f for f in lineas if f.box.almost_equals(Carta.comentario) ]:
+    for f in [ f for f in lineas if f.box.within(Carta.comentario) ]:
         datos.comentario = f.text
         break
-    for f in [ f for f in lineas if f.box.almost_equals(Carta.codigo) ]:
+    for f in [ f for f in lineas if f.box.within(Carta.codigo) ]:
         datos.codigo = f.text
         break
-    for f in [ f for f in lineas if f.box.almost_equals(Carta.nombre) ]:
+    for f in [ f for f in lineas if f.box.within(Carta.nombre) ]:
         datos.nombre = f.text
         break    
     datos.slbs = [ f.text for f in lineas if f.box.within(Carta.slbs) ]
 
 def procesar_fichero(client, fich):
+    log.info(f"(fichero) : {fich}")
     with open(fich, "rb") as fich:
         read_response = client.read_in_stream(fich, language="de", raw=True)
         print(read_response)
@@ -107,12 +114,12 @@ def procesar_fichero(client, fich):
 
                 if not pagina % 2:
                     datos = Datos()
+                    datos.pagina = pagina
                     procesar_carta(datos, lines)
                 else:
                     procesar_cargo(datos, lines)
-
-                print("aquí estoy")
-                
+                    log.info(f"\t{datos.factura}\t{datos.fecha}\t{datos.importe}\t{datos.codigo}"
+                            f"\t{datos.nombre}\t{','.join(datos.slbs)}\t{datos.comentario}\t{fich}\t{datos.pagina}")
 
                 pagina += 1
 
