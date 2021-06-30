@@ -114,7 +114,7 @@ def procesar_directorio(lc):
     endpoint = lc.cp.get("READAPI", "endpoint")
     key = lc.cp.get("READAPI", "key")
     client = ComputerVisionClient(endpoint, CognitiveServicesCredentials(key))
-    for file in [ f for f in path.glob("*.pdf") ]: 
+    for file in [ f for f in path.glob("*.jpg") ]: 
         procesar_fichero(client, f"{lc.directorio}/{file.name}")
 
 if __name__ == "__main__":
@@ -123,7 +123,7 @@ if __name__ == "__main__":
             format="%(asctime)s %(levelname)s %(thread)d %(processName)s %(module)s %(funcName)s %(message)s" )
     logging.getLogger('pdfminer').setLevel(logging.ERROR)
 
-    directorio = "c:/temp/porsche/listas"
+    directorio = "c:/temp/porsche/listas1"
     cp = configparser.ConfigParser()
     cp.read(os.path.expanduser("~") + "/etc/config.ini")    
     try:

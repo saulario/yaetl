@@ -72,7 +72,10 @@ def procesar_fichero(lc, flujo, file):
     if flujo == "OUT":
         file.unlink()
     else:
-        file.rename(f"{str(file.parent)}/procesados/{file.name}")
+        try:
+            file.rename(f"{str(file.parent)}/procesados/{file.name}")
+        except FileExistsError:
+            pass
 
 def borrar_ficheros_antiguos(p):
     ahora = dt.datetime.now()
