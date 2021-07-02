@@ -53,7 +53,10 @@ def procesar_fichero(lc, flujo, file):
     em.archivo = file.name
     try:
         idx = -1 if flujo == "OUT" else -2
-        em.proceso = file.name.split(".")[idx]
+        proceso = file.name
+        if flujo == "IN" and not proceso.endswith(".TXT"):
+            proceso += ".TXT"
+        em.proceso = proceso.split(".")[idx]
     except:
         pass
     em.fechaCreacion = dt.datetime.fromtimestamp(st.st_ctime)
