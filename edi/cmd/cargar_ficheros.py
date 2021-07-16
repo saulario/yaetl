@@ -5,10 +5,17 @@ import datetime as dt
 import logging
 import os
 import pathlib
+import re
 
 import sqlalchemy
 
 log = logging.getLogger(__name__)
+
+res = [
+    re.compile(r"^.+(?P<proceso>(33T2VW|33T3VW|33T4VW|4984MX|4984UC|4987FL|ADIENT|ADUANAS|ANSZIP|ASNHIS|ASNMAR|ASNTXT|ASNVMEX|BASTID|BAT511|BEWEGX|BFM141|BFM143|CATCON|CHATTA|COVISI|DBZASN|DELCSL|DELFOR|DELSIL|DESACA|DFAVUS|DFLAUS|DISCOV|EDIPROD|EMPAQS|ENTALM|ENTREG|ERRDEL|FAURECIA|FLOWVN|FSTABL|GAALSE|GACAVA|GALOI3|GALSCC|GALSSC|GASALS|GDAAUD|GDFDBZ|GDSIW6|GSTAMM|GW3640|GW3642|GW3645|GW3646|GW3650|GW3X05|IDSIW6|INVOIC|LAMBORWE|LE33T1|LE33T2|LE4945|LE4987|LTSTAM|LU33T1|LU4987|LUNKOM|MAGNAPOL|MANPRO|MX6015|MX6030|OPELSS|PLASTIC|PORSCHE|PORTSCS|POSRCHELE|POSRCHELEL|POSRCHELET3|POSRCHELET4|POSRCHEZU|POSRCHEZUL|POSRCHEZUT3|proceso|PROVAE|PROVIB|PROVSE|RECAMBIO|SALALM|SCCT-KCC|SCHENE|SDSIW6|SKODA|STATRA|TEMOCO|TOALCA|TOSACA|TOTDEL|TRANSP|VALDEL|VALEOILU|VD4906|VD4984|VESTDE|VESTIB|VWL4945L|VWL4945V|WRSIMX|ZU33T1|ZU33T2|ZU4945|ZU4987))[\.TXT|\.XML|\.ZIP]*$"),
+    re.compile(r"^.+(?P<proceso>FTARIS|PLAOMN)\.\d+.TXT$"),
+    re.compile(r"^.+(?P<proceso>(LE|ZU)4945)$"),
+]
 
 class EdiMensajes():
     
@@ -44,6 +51,13 @@ class LocalContext():
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.conn.close()
 
+
+def obtener_proceso(nombre):
+    a = [ x.match(nombre) for x in res if x.match(nombre) ]
+    if not a: return None
+    b = a[0].group("proceso")
+    return b
+
 def procesar_fichero(lc, flujo, file):
     log.info(f"\t(file): {file.name}")
     st = file.stat()
@@ -52,11 +66,7 @@ def procesar_fichero(lc, flujo, file):
     em.flujo = flujo
     em.archivo = file.name
     try:
-        idx = -1 if flujo == "OUT" else -2
-        proceso = file.name
-        if flujo == "IN" and not proceso.endswith(".TXT"):
-            proceso += ".TXT"
-        em.proceso = proceso.split(".")[idx]
+        em.proceso = obtener_proceso(em.archivo)
     except:
         pass
     em.fechaCreacion = dt.datetime.fromtimestamp(st.st_ctime)
@@ -122,7 +132,18 @@ def procesar_buzon(lc):
         procesar_directorio(lc, "IN", row.pathIn)
         procesar_directorio(lc, "OUT", row.pathOut)
 
+def retroactivo(lc):
+    edi_mensajes_t = sqlalchemy.Table("edi_mensajes", lc.metadata, autoload=True)
+    mensajes = lc.conn.execute(edi_mensajes_t.select()).fetchall()
+    for mensaje in mensajes:
+        proceso = obtener_proceso(mensaje.archivo)
+        if proceso == mensaje.proceso: continue
+        values = { "proceso" : proceso }
+        stmt = edi_mensajes_t.update(None).values(values).where(edi_mensajes_t.c.id == mensaje.id)
+        lc.conn.execute(stmt)
+
 if __name__ == "__main__":
+
     filename = os.path.expanduser("~") + "/log/cargar_ficheros.log"
     logging.basicConfig(level=logging.DEBUG, filename=filename,
             format="%(asctime)s %(levelname)s %(thread)d %(processName)s %(module)s %(funcName)s %(message)s" )
@@ -139,6 +160,7 @@ if __name__ == "__main__":
     try:
         with LocalContext(cp, buzon) as lc:
             procesar_buzon(lc)
+            #retroactivo(lc)
     except Exception as e:
         log.error(e, exc_info=True)
 
