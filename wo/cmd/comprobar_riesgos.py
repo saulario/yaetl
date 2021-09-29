@@ -20,38 +20,66 @@ POLIZA  = 539293
 
 def comprobar_activo(poliza, cif):
     """
-    Basta con que un único GF esté activo
+    Comprueba que haya al menos un GF activo. En caso contrario hay que bloquearlo.
     """
     if cif is None:
         return
     activos = [ x for x in cif if x.fecha_baja is None ]
-    if not len(activos):
-        log.info("\t%s\tno tiene GF activos, bloquear", poliza.cif)
+    if activos: return
+
+    action = "Baja"
+    motivo_bloqueo = "BAJA"
+    baja = [ x for x in cif if x.motivo_baja == 9 ]
+    if len(baja) == len(cif):
+        motivo_bloqueo = "BAJA RIESGO"
+
+    bloqueo = [ x for x in cif if x.motivo_baja == 11 ]
+    if len(bloqueo) == len(cif):
+        action = "Bloquear"
+        motivo_bloqueo = "BLOQUEO RIESGO"
+
+    log.info("\t%s\tno tiene GF activos, baja riesgo...", poliza.cif)
+    fbaja = max(cif, key=lambda d: d.fecha_baja) or dt.datetime.now()
+
+    url = url_api % (poliza.cif, action)
+    params = { 
+        "Origen": "PLUS", 
+        "Usuario": "CORRECTOR",
+    }
+    data =  { 
+        "Cif" : poliza.cif,
+        "Ide" : cif[0].ide,
+        "Moneda" : None,
+        "Bloqueado" : None,
+        "MotivoBloqueo" : motivo_bloqueo,
+        "FechaBloqueo" : fbaja.fecha_baja.isoformat()
+    }
+    response = requests.post(url, params=params, data=data)
 
 def comprobar_bloqueado(poliza, cif):
     """
-    Todos los GF deben esar bloqueados
+    Comprueba que todos los GF estén bloqueados. En caso contrario hay que reactivarlo.
     """
     if cif is None:
         return
     activos = [ x for x in cif if x.fecha_baja is None ]
-    if len(activos):
-        log.info("\t%s\ttiene %d GF activos, desbloquear", poliza.cif, len(activos))
-        url = url_api % (poliza.cif, "Reactivar")
-        params = { 
-            "Origen": "PLUS", 
-            "Usuario": "CORRECTOR",
-        }
-        data =  { 
-            "Cif" : poliza.cif,
-            "Ide" : activos[0].ide,
-            "Moneda" : None,
-            "Bloqueado" : None,
-            "MotivoBloqueo" : None,
-            "FechaBloqueo" : None
-        }
-        response = requests.post(url, params=params, data=data)
-        print("Estoy aquí")
+    if not activos: return
+
+    log.info("\t%s\ttiene %d GF activos, reactivar...", poliza.cif, len(activos))
+    url = url_api % (poliza.cif, "Reactivar")
+    params = { 
+        "Origen": "PLUS", 
+        "Usuario": "CORRECTOR",
+    }
+    data =  { 
+        "Cif" : poliza.cif,
+        "Ide" : activos[0].ide,
+        "Moneda" : None,
+        "Bloqueado" : None,
+        "MotivoBloqueo" : None,
+        "FechaBloqueo" : None
+    }
+    response = requests.post(url, params=params, data=data)
 
 
 def comprobar(poliza, cif):
